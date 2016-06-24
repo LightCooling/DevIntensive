@@ -1,3 +1,13 @@
 <resources>
-    <string name="app_name">DevIntensive</string>
+    <string name="app_name">Курбанаев Равиль</string>
+    <string name="phone_title">Мобильный</string>
+    <string name="phone_value">+7 (XXX) XXX-XX-XX</string>
+    <string name="email_title">E-mail</string>
+    <string name="email_value">*********@gmail.com</string>
+    <string name="vk_title">Профиль в VK</string>
+    <string name="vk_value">vk.com/id29749022</string>
+    <string name="github_title">Репозиторий</string>
+    <string name="github_value">github.com/LightCooling/DevIntensive</string>
+    <string name="about_title">О себе</string>
+    <string name="about_value">Stripping the back of tree with a hatchet, Diana L. Six, a University of Montana insect scientist, pointed out the telltale signs of infestation by oine beetles: channels drilled by the creatures as they chewed their way through the juicy part of the three. Because the beetles had out off the tree’s nutrients, the chlorophyll that made the needles green was breaking down, leaving only reddish compounds.</string>
 </resources>
