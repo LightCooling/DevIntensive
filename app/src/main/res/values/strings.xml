@@ -10,4 +10,10 @@
     <string name="github_value">github.com/LightCooling/DevIntensive</string>
     <string name="about_title">О себе</string>
     <string name="about_value">Stripping the back of tree with a hatchet, Diana L. Six, a University of Montana insect scientist, pointed out the telltale signs of infestation by oine beetles: channels drilled by the creatures as they chewed their way through the juicy part of the three. Because the beetles had out off the tree’s nutrients, the chlorophyll that made the needles green was breaking down, leaving only reddish compounds.</string>
+    <string name="user_profile.placeholder.image">Изменить изображение профиля</string>
+    <string name="user_profile_dialog_gallery">Загрузить из галлереи</string>
+    <string name="user_profile_dialog_camera">Сделать снимок</string>
+    <string name="user_profile_dialog_cancel">Отмена</string>
+    <string name="user_profile_dialog_title">Изменить фотографию профиля</string>
+    <string name="user_profile_chose_message">Выберите файл</string>
 </resources>
