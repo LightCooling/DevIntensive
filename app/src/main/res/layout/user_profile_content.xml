@@ -25,16 +25,17 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="@dimen/spacing_large_56"
+                android:layout_marginRight="@dimen/spacing_large_56"
                 android:orientation="vertical">
 
                 <TextView
                     style="@style/txt_hint"
-                    android:text="@string/phone_title"/>
+                    android:text="@string/profile.phone.hint"/>
 
                 <EditText
                     android:id="@+id/phone_et"
                     style="@style/txt_value"
-                    android:text="@string/phone_value"/>
+                    android:text="@string/profile.phone.value"/>
             </LinearLayout>
 
             <ImageView
@@ -59,16 +60,17 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="@dimen/spacing_large_56"
+                android:layout_marginRight="@dimen/spacing_large_56"
                 android:orientation="vertical">
 
                 <TextView
                     style="@style/txt_hint"
-                    android:text="@string/email_title"/>
+                    android:text="@string/profile.email.hint"/>
 
                 <EditText
                     android:id="@+id/email_et"
                     style="@style/txt_value"
-                    android:text="@string/email_value"/>
+                    android:text="@string/profile.email.value"/>
             </LinearLayout>
 
             <ImageView
@@ -93,16 +95,17 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="@dimen/spacing_large_56"
+                android:layout_marginRight="@dimen/spacing_large_56"
                 android:orientation="vertical">
 
                 <TextView
                     style="@style/txt_hint"
-                    android:text="@string/vk_title"/>
+                    android:text="@string/profile.vk_title"/>
 
                 <EditText
                     android:id="@+id/vk_et"
                     style="@style/txt_value"
-                    android:text="@string/vk_value"/>
+                    android:text="@string/profile.vk.value"/>
             </LinearLayout>
 
             <ImageView
@@ -116,7 +119,7 @@
         <!-- Github repository -->
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/size_large_72">
+            android:layout_height="wrap_content">
 
             <ImageView
                 style="@style/icon_left"
@@ -127,16 +130,17 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="@dimen/spacing_large_56"
+                android:layout_marginRight="@dimen/spacing_large_56"
                 android:orientation="vertical">
 
                 <TextView
                     style="@style/txt_hint"
-                    android:text="@string/github_title"/>
+                    android:text="@string/profile.github.hint"/>
 
                 <EditText
                     android:id="@+id/github_et"
                     style="@style/txt_value"
-                    android:text="@string/github_value"/>
+                    android:text="@string/profile.github.value"/>
             </LinearLayout>
 
             <ImageView
@@ -167,12 +171,12 @@
 
                 <TextView
                     style="@style/txt_hint"
-                    android:text="@string/about_title"/>
+                    android:text="@string/profile.about.hint"/>
 
                 <EditText
                     android:id="@+id/about_et"
                     style="@style/txt_value"
-                    android:text="@string/about_value"/>
+                    android:text="@string/profile.about.value"/>
             </LinearLayout>
 
         </RelativeLayout>

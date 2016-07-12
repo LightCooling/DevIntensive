@@ -21,13 +21,18 @@ public class PreferencesManager {
             ConstantManager.USER_BIO_KEY
     };
 
+    private static final String[] USER_VALUES = {
+            ConstantManager.USER_RATING_VALUE,
+            ConstantManager.USER_CODE_LINES_VALUE,
+            ConstantManager.USER_PROJECTS_VALUE,
+    };
+
     public PreferencesManager() {
         mSharedPreferences = DevIntensiveApplication.getSharedPreferences();
     }
 
     public void saveUserProfileData(List<String> userFields) {
         SharedPreferences.Editor editor = mSharedPreferences.edit();
-
         for (int i = 0; i < USER_FIELDS.length; i++) {
             editor.putString(USER_FIELDS[i], userFields.get(i));
         }
@@ -44,6 +49,22 @@ public class PreferencesManager {
         return userFields;
     }
 
+    public void saveUserProfileValues(int[] userValues) {
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        for (int i = 0; i < USER_VALUES.length; i++) {
+            editor.putString(USER_VALUES[i], String.valueOf(userValues[i]));
+        }
+        editor.apply();
+    }
+
+    public List<String> loadUserProfileValues() {
+        List<String> userValues = new ArrayList<>();
+        for (int i = 0; i < USER_VALUES.length; i++) {
+            userValues.add(mSharedPreferences.getString(USER_VALUES[i], "-"));
+        }
+        return userValues;
+    }
+
     public void saveUserPhoto(Uri uri) {
         SharedPreferences.Editor editor = mSharedPreferences.edit();
         editor.putString(ConstantManager.USER_PHOTO_KEY, uri.toString());
@@ -52,5 +73,35 @@ public class PreferencesManager {
 
     public Uri loadUserPhoto() {
         return Uri.parse(mSharedPreferences.getString(ConstantManager.USER_PHOTO_KEY, "android.resource://com.softdesign.devintensive/drawable/raspberries"));
+    }
+
+    public void saveUserAvatar(Uri uri) {
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.putString(ConstantManager.USER_AVATAR_KEY, uri.toString());
+        editor.apply();
+    }
+
+    public Uri loadUserAvatar() {
+        return Uri.parse(mSharedPreferences.getString(ConstantManager.USER_AVATAR_KEY, "android.resource://com.softdesign.devintensive/drawable/raspberries"));
+    }
+
+    public void saveAuthToken(String token) {
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.putString(ConstantManager.AUTH_TOKEN_KEY, token);
+        editor.apply();
+    }
+
+    public String getAuthToken() {
+        return mSharedPreferences.getString(ConstantManager.AUTH_TOKEN_KEY, "");
+    }
+
+    public void saveUserId(String id) {
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.putString(ConstantManager.USER_ID_KEY, id);
+        editor.apply();
+    }
+
+    public String getUserId() {
+        return mSharedPreferences.getString(ConstantManager.USER_ID_KEY, "");
     }
 }

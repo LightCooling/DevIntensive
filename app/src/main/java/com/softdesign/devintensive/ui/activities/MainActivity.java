@@ -36,6 +36,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.softdesign.devintensive.R;
 import com.softdesign.devintensive.data.managers.DataManager;
@@ -70,11 +72,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     private EditText mUserPhone, mUserEmail, mUserVk, mUserGithub, mUserAbout;
     private List<EditText> mUserInfoViews;
 
+    private TextView mUserValueRating, mUserValueCodeLines, mUserValueProjects;
+    private List<TextView> mUserValueViews;
+
     private AppBarLayout.LayoutParams mAppBarParams;
     private File mPhotoFile = null;
     private Uri mSelectedImage;
 
-    //<editor-fold desc="Lifecycle methods">
+    //<editor-fold desc="========== Lifecycle methods ==========">
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -89,6 +94,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         mProfilePlaceholder = (RelativeLayout) findViewById(R.id.profile_placeholder);
         mCollapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
         mProfileImage = (ImageView) findViewById(R.id.user_photo_img);
+
         mUserPhone = (EditText) findViewById(R.id.phone_et);
         mUserEmail = (EditText) findViewById(R.id.email_et);
         mUserVk = (EditText) findViewById(R.id.vk_et);
@@ -101,6 +107,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         mUserInfoViews.add(mUserGithub);
         mUserInfoViews.add(mUserAbout);
 
+        mUserValueRating = (TextView) findViewById(R.id.stats_rating);
+        mUserValueCodeLines = (TextView) findViewById(R.id.stats_lines);
+        mUserValueProjects = (TextView) findViewById(R.id.stats_projects);
+        mUserValueViews = new ArrayList<>();
+        mUserValueViews.add(mUserValueRating);
+        mUserValueViews.add(mUserValueCodeLines);
+        mUserValueViews.add(mUserValueProjects);
+
         findViewById(R.id.phone_action).setOnClickListener(this);
         findViewById(R.id.email_action).setOnClickListener(this);
         findViewById(R.id.vk_action).setOnClickListener(this);
@@ -111,7 +125,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
         setupToolbar();
         setupDrawer();
-        //setDrawerUserPhoto(DataManager.getInstance().getPreferencesManager().loadUserPhoto());
     }
 
     @Override
@@ -123,17 +136,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     @Override
     protected void onResume() {
         super.onResume();
-        loadUserInfoValue();
-        Picasso.with(this)
-                .load(mDataManager.getPreferencesManager().loadUserPhoto())
-                .into(mProfileImage);
+        initUserFields();
+        initUserValue();
+        insertProfileImage(mDataManager.getPreferencesManager().loadUserPhoto());
+        //insertAvatarImage(mDataManager.getPreferencesManager().loadUserAvatar());
         Log.d(TAG, "onResume");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        saveUserInfoValues();
+        saveUserFields();
         Log.d(TAG, "onPause");
     }
 
@@ -240,12 +253,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
                 if (resultCode == RESULT_OK && data != null) {
                     mSelectedImage = data.getData();
                     insertProfileImage(mSelectedImage);
+                    insertAvatarImage(mSelectedImage);
                 }
                 break;
             case ConstantManager.REQUEST_CAMERA_PICTURE:
                 if (resultCode == RESULT_OK && mPhotoFile != null) {
                     mSelectedImage = Uri.fromFile(mPhotoFile);
                     insertProfileImage(mSelectedImage);
+                    insertAvatarImage(mSelectedImage);
                 }
                 break;
         }
@@ -282,7 +297,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
             public boolean onNavigationItemSelected(MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.team_menu:
-                        setContentView(R.layout.auth);
+                        setContentView(R.layout.activity_auth);
                 }
                 item.setChecked(true);
                 mNavigationDrawer.closeDrawer(GravityCompat.START);
@@ -315,14 +330,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         }
     }
 
-    private void loadUserInfoValue() {
+    private void initUserFields() {
         List<String> userData = mDataManager.getPreferencesManager().loadUserProfileData();
         for (int i = 0; i < userData.size(); i++) {
             mUserInfoViews.get(i).setText(userData.get(i));
         }
     }
 
-    private void saveUserInfoValues() {
+    private void saveUserFields() {
         List<String> userData = new ArrayList<>();
         for (EditText userFieldView : mUserInfoViews) {
             userData.add(userFieldView.getText().toString());
@@ -330,7 +345,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         mDataManager.getPreferencesManager().saveUserProfileData(userData);
     }
 
-    //<editor-fold desc="Set user photos">
+    private void initUserValue() {
+        List<String> userData = mDataManager.getPreferencesManager().loadUserProfileValues();
+        for (int i = 0; i < userData.size(); i++) {
+            mUserValueViews.get(i).setText(userData.get(i));
+        }
+    }
+
+    //<editor-fold desc="========== Set user photos ==========">
     private void loadPhotoFromGallery() {
         Intent takeGalleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         takeGalleryIntent.setType("image/*");
@@ -408,17 +430,16 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
                 .load(image)
                 .placeholder(R.drawable.user_bg)
                 .into(mProfileImage);
-        setDrawerUserPhoto(image);
 
         mDataManager.getPreferencesManager().saveUserPhoto(image);
     }
 
-    private void setDrawerUserPhoto (Uri uri) {
-        ImageView headerPhoto = (ImageView) findViewById(R.id.nav_header_photo);
-        Picasso.with(this).load(uri).into(headerPhoto, new Callback() {
+    private void insertAvatarImage (Uri image) {
+        ImageView headerPhoto = (ImageView) findViewById(R.id.nav_header_avatar);
+        Picasso.with(this).load(image).into(headerPhoto, new Callback() {
             @Override
             public void onSuccess() {
-                ImageView headerPhoto = (ImageView) findViewById(R.id.nav_header_photo);
+                ImageView headerPhoto = (ImageView) findViewById(R.id.nav_header_avatar);
                 Bitmap bitmap = ((BitmapDrawable) headerPhoto.getDrawable()).getBitmap();
                 RoundedBitmapDrawable roundedImage = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
                 roundedImage.setGravity(Gravity.CENTER);

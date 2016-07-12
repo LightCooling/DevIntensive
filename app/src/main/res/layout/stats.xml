@@ -24,7 +24,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/stats_rating"
+            android:text="@string/user_profile.stats.rating"
             android:textSize="@dimen/text_14"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
@@ -48,7 +48,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/stats_lines"
+            android:text="@string/user_profile.stats.lines"
             android:textSize="@dimen/text_14"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
@@ -72,7 +72,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/stats_projects"
+            android:text="@string/user_profile.stats.projects"
             android:textSize="@dimen/text_14"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>

@@ -6,10 +6,11 @@
                 android:paddingTop="@dimen/spacing_medial_24">
 
     <ImageView
-        android:id="@+id/nav_header_photo"
+        android:id="@+id/nav_header_avatar"
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_marginLeft="@dimen/spacing_normal_16"
+        android:background="@color/grey"
         android:layout_marginTop="@dimen/spacing_normal_16"/>
 
     <LinearLayout
