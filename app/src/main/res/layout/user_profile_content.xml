@@ -4,19 +4,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+    app:layout_behavior="com.softdesign.devintensive.ui.behaviors.CustomNestedScrollBehavior">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <include layout="@layout/stats"/>
-
         <!-- Phone number -->
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/size_large">
+            android:layout_height="@dimen/size_large_72">
 
             <ImageView
                 style="@style/icon_left"
@@ -26,7 +24,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="@dimen/spacing_large"
+                android:layout_marginLeft="@dimen/spacing_large_56"
                 android:orientation="vertical">
 
                 <TextView
@@ -50,7 +48,7 @@
         <!-- E-mail -->
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/size_large">
+            android:layout_height="@dimen/size_large_72">
 
             <ImageView
                 style="@style/icon_left"
@@ -60,7 +58,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="@dimen/spacing_large"
+                android:layout_marginLeft="@dimen/spacing_large_56"
                 android:orientation="vertical">
 
                 <TextView
@@ -84,7 +82,7 @@
         <!-- Vk.com link -->
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/size_large">
+            android:layout_height="@dimen/size_large_72">
 
             <ImageView
                 style="@style/icon_left"
@@ -94,7 +92,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="@dimen/spacing_large"
+                android:layout_marginLeft="@dimen/spacing_large_56"
                 android:orientation="vertical">
 
                 <TextView
@@ -118,7 +116,7 @@
         <!-- Github repository -->
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/size_large">
+            android:layout_height="@dimen/size_large_72">
 
             <ImageView
                 style="@style/icon_left"
@@ -128,7 +126,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="@dimen/spacing_large"
+                android:layout_marginLeft="@dimen/spacing_large_56"
                 android:orientation="vertical">
 
                 <TextView
@@ -162,9 +160,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginBottom="@dimen/spacing_normal"
-                android:layout_marginLeft="@dimen/spacing_large"
-                android:layout_marginRight="@dimen/spacing_normal"
+                android:layout_marginBottom="@dimen/spacing_normal_16"
+                android:layout_marginLeft="@dimen/spacing_large_56"
+                android:layout_marginRight="@dimen/spacing_normal_16"
                 android:orientation="vertical">
 
                 <TextView

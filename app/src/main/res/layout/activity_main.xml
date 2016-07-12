@@ -4,18 +4,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/navigation_drawer"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fitsSystemWindows="true">
+    android:layout_height="match_parent">
 
     <android.support.design.widget.CoordinatorLayout
         android:id="@+id/coordinator_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true">
 
         <android.support.design.widget.AppBarLayout
             android:id="@+id/appbar_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:fitsSystemWindows="true"
             android:background="@color/color_primary"
             android:theme="@style/AppTheme.AppBarOverlay">
 
@@ -23,28 +24,28 @@
                 android:id="@+id/collapsing_toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fitsSystemWindows="true"
                 app:contentScrim="@color/color_primary"
-                app:layout_scrollFlags="scroll|exitUntilCollapsed">
+                app:layout_scrollFlags="scroll|exitUntilCollapsed|snap">
 
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/profile_image_size"
-                    android:fitsSystemWindows="true">
                     <ImageView
                         android:id="@+id/user_photo_img"
                         android:layout_width="match_parent"
                         android:layout_height="@dimen/profile_image_size"
+                        android:fitsSystemWindows="true"
                         android:scaleType="centerCrop"
                         android:src="@drawable/raspberries"/>
                     <RelativeLayout
                         android:id="@+id/profile_placeholder"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="@dimen/profile_image_size"
+                        android:fitsSystemWindows="true"
                         android:background="@drawable/user_bg"
                         android:visibility="gone">
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:fitsSystemWindows="true"
                             android:text="@string/user_profile.placeholder.image"
                             android:textColor="@color/white"
                             android:fontFamily="sans-serif-medium"
@@ -59,9 +60,8 @@
                             android:layout_centerHorizontal="true"
                             android:layout_centerVertical="true"
                             android:layout_alignParentBottom="true"
-                            android:layout_marginBottom="@dimen/spacing_large"/>
+                            android:layout_marginBottom="@dimen/spacing_large_56"/>
                     </RelativeLayout>
-                </FrameLayout>
 
                 <android.support.v7.widget.Toolbar
                     android:id="@+id/toolbar"
@@ -73,6 +73,8 @@
             </android.support.design.widget.CollapsingToolbarLayout>
 
         </android.support.design.widget.AppBarLayout>
+
+        <include layout="@layout/stats"/>
 
         <include layout="@layout/user_profile_content" />
 

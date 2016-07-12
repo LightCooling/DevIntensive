@@ -5,7 +5,9 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -17,9 +19,10 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
-import android.support.design.widget.SwipeDismissBehavior;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -27,26 +30,25 @@ import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.softdesign.devintensive.R;
 import com.softdesign.devintensive.data.managers.DataManager;
 import com.softdesign.devintensive.utils.ConstantManager;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.jar.Manifest;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener{
 
@@ -55,6 +57,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     private DataManager mDataManager;
     private int mCurrentEditMode = 0;
 
+    private NavigationView mNavigationView;
     private CoordinatorLayout mCoordinatorLayout;
     private Toolbar mToolbar;
     private DrawerLayout mNavigationDrawer;
@@ -71,11 +74,13 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     private File mPhotoFile = null;
     private Uri mSelectedImage;
 
+    //<editor-fold desc="Lifecycle methods">
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mDataManager = DataManager.getInstance();
+        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);
         mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         mNavigationDrawer = (DrawerLayout) findViewById(R.id.navigation_drawer);
@@ -106,14 +111,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
         setupToolbar();
         setupDrawer();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            mNavigationDrawer.openDrawer(GravityCompat.START);
-        }
-        return super.onOptionsItemSelected(item);
+        //setDrawerUserPhoto(DataManager.getInstance().getPreferencesManager().loadUserPhoto());
     }
 
     @Override
@@ -156,37 +154,83 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         super.onRestart();
         Log.d(TAG, "onRestart");
     }
+    //</editor-fold>
 
-    private void showSnackbar(String msg) {
-        Snackbar.make(mCoordinatorLayout, msg, Snackbar.LENGTH_SHORT).show();
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            mNavigationDrawer.openDrawer(GravityCompat.START);
+        }
+        return super.onOptionsItemSelected(item);
     }
 
-    private void setupToolbar() {
-        setSupportActionBar(mToolbar);
+    @Override
+    public void onBackPressed() {
+        if (mNavigationView.isShown())
+            mNavigationDrawer.closeDrawer(GravityCompat.START);
+        else
+            super.onBackPressed();
+    }
 
-        ActionBar actionBar = getSupportActionBar();
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.fab:
+                if (mCurrentEditMode == 0)
+                    changeEditMode(1);
+                else
+                    changeEditMode(0);
+                break;
+            case R.id.profile_placeholder:
+                showDialog(ConstantManager.LOAD_PROFILE_PHOTO);
+                break;
 
-        mAppBarParams = (AppBarLayout.LayoutParams) mCollapsingToolbarLayout.getLayoutParams();
-        if (actionBar != null) {
-            actionBar.setHomeAsUpIndicator(R.drawable.ic_menu_white);
-            actionBar.setDisplayHomeAsUpEnabled(true);
+            case R.id.phone_action:
+                Intent makeCallIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("tel:" + mUserPhone.getText()));
+                startActivity(makeCallIntent);
+                break;
+            case R.id.email_action:
+                Intent sendMailIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + mUserEmail.getText()));
+                startActivity(sendMailIntent);
+                break;
+            case R.id.vk_action:
+                Intent viewVkIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://" + mUserVk.getText()));
+                startActivity(viewVkIntent);
+                break;
+            case R.id.github_action:
+                Intent viewRepIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://" + mUserGithub.getText()));
+                startActivity(viewRepIntent);
+                break;
         }
     }
 
-    private void setupDrawer() {
-        NavigationView navigationView = (NavigationView) findViewById(R.id.navigation_view);
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.team_menu:
-                        setContentView(R.layout.auth);
-                }
-                item.setChecked(true);
-                mNavigationDrawer.closeDrawer(GravityCompat.START);
-                return false;
-            }
-        });
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+            case ConstantManager.LOAD_PROFILE_PHOTO:
+                String[] selectItems = {getString(R.string.user_profile_dialog_gallery), getString(R.string.user_profile_dialog_camera), getString(R.string.user_profile_dialog_cancel)};
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle(R.string.user_profile_dialog_title);
+                builder.setItems(selectItems, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int choiceItem) {
+                        switch (choiceItem) {
+                            case 0:
+                                loadPhotoFromGallery();
+                                break;
+                            case 1:
+                                loadPhotoFromCamera();
+                                break;
+                            case 2:
+                                dialog.cancel();
+                                break;
+                        }
+                    }
+                });
+                return builder.create();
+        }
+        return null;
     }
 
     @Override
@@ -205,6 +249,46 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
                 }
                 break;
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == ConstantManager.CAMERA_REQUEST_PERMISSION_CODE && grantResults.length == 2) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                loadPhotoFromCamera();
+            }
+        }
+    }
+
+    private void showMessage(String msg) {
+        Snackbar.make(mCoordinatorLayout, msg, Snackbar.LENGTH_SHORT).show();
+    }
+
+    private void setupToolbar() {
+        setSupportActionBar(mToolbar);
+
+        ActionBar actionBar = getSupportActionBar();
+
+        mAppBarParams = (AppBarLayout.LayoutParams) mCollapsingToolbarLayout.getLayoutParams();
+        if (actionBar != null) {
+            actionBar.setHomeAsUpIndicator(R.drawable.ic_menu_white);
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
+    private void setupDrawer() {
+        mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.team_menu:
+                        setContentView(R.layout.auth);
+                }
+                item.setChecked(true);
+                mNavigationDrawer.closeDrawer(GravityCompat.START);
+                return false;
+            }
+        });
     }
 
     private void changeEditMode(int mode) {
@@ -246,38 +330,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         mDataManager.getPreferencesManager().saveUserProfileData(userData);
     }
 
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.fab:
-                if (mCurrentEditMode == 0)
-                    changeEditMode(1);
-                else
-                    changeEditMode(0);
-                break;
-            case R.id.profile_placeholder:
-                showDialog(ConstantManager.LOAD_PROFILE_PHOTO);
-                break;
-
-            case R.id.phone_action:
-                Intent makeCallIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("tel:" + mUserPhone.getText()));
-                startActivity(makeCallIntent);
-                break;
-            case R.id.email_action:
-                Intent sendMailIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("mailto:" + mUserEmail.getText()));
-                startActivity(sendMailIntent);
-                break;
-            case R.id.vk_action:
-                Intent viewVkIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://" + mUserVk.getText()));
-                startActivity(viewVkIntent);
-                break;
-            case R.id.github_action:
-                Intent viewRepIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://" + mUserGithub.getText()));
-                startActivity(viewRepIntent);
-                break;
-        }
-    }
-
+    //<editor-fold desc="Set user photos">
     private void loadPhotoFromGallery() {
         Intent takeGalleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         takeGalleryIntent.setType("image/*");
@@ -312,15 +365,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == ConstantManager.CAMERA_REQUEST_PERMISSION_CODE && grantResults.length == 2) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                loadPhotoFromCamera();
-            }
-        }
-    }
-
     private void hideProfilePlaceholder() {
         mProfilePlaceholder.setVisibility(View.GONE);
     }
@@ -329,45 +373,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         mProfilePlaceholder.setVisibility(View.VISIBLE);
     }
 
-    private void lockToolbar() {
-        mAppBarLayout.setExpanded(true, true);
+    private void lockToolbar() {mAppBarLayout.setExpanded(true, true);
         mAppBarParams.setScrollFlags(0);
         mCollapsingToolbarLayout.setLayoutParams(mAppBarParams);
     }
 
     private void unlockToolbar() {
         mAppBarParams.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
-                | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS_COLLAPSED);
+                | AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED
+                | AppBarLayout.LayoutParams.SCROLL_FLAG_SNAP);
+
         mCollapsingToolbarLayout.setLayoutParams(mAppBarParams);
-    }
-
-    @Override
-    protected Dialog onCreateDialog(int id) {
-        switch (id) {
-            case ConstantManager.LOAD_PROFILE_PHOTO:
-                String[] selectItems = {getString(R.string.user_profile_dialog_gallery), getString(R.string.user_profile_dialog_camera), getString(R.string.user_profile_dialog_cancel)};
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle(R.string.user_profile_dialog_title);
-                builder.setItems(selectItems, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int choiceItem) {
-                        switch (choiceItem) {
-                            case 0:
-                                loadPhotoFromGallery();
-                                break;
-                            case 1:
-                                loadPhotoFromCamera();
-                                break;
-                            case 2:
-                                dialog.cancel();
-                                break;
-                        }
-                    }
-                });
-                return builder.create();
-        }
-        return null;
     }
 
     private File createImageFile() throws IOException {
@@ -390,10 +406,33 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     private void insertProfileImage(Uri image) {
         Picasso.with(this)
                 .load(image)
+                .placeholder(R.drawable.user_bg)
                 .into(mProfileImage);
+        setDrawerUserPhoto(image);
 
         mDataManager.getPreferencesManager().saveUserPhoto(image);
     }
+
+    private void setDrawerUserPhoto (Uri uri) {
+        ImageView headerPhoto = (ImageView) findViewById(R.id.nav_header_photo);
+        Picasso.with(this).load(uri).into(headerPhoto, new Callback() {
+            @Override
+            public void onSuccess() {
+                ImageView headerPhoto = (ImageView) findViewById(R.id.nav_header_photo);
+                Bitmap bitmap = ((BitmapDrawable) headerPhoto.getDrawable()).getBitmap();
+                RoundedBitmapDrawable roundedImage = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
+                roundedImage.setGravity(Gravity.CENTER);
+                roundedImage.setCircular(true);
+                headerPhoto.setImageDrawable(roundedImage);
+            }
+
+            @Override
+            public void onError() {
+                showMessage("Error loading avatar");
+            }
+        });
+    }
+    //</editor-fold>
 
     public void openApplicationSettings() {
         Intent appSettingsIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()));

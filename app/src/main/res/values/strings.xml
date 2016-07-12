@@ -16,4 +16,7 @@
     <string name="user_profile_dialog_cancel">Отмена</string>
     <string name="user_profile_dialog_title">Изменить фотографию профиля</string>
     <string name="user_profile_chose_message">Выберите файл</string>
+    <string name="stats_rating">Рейтинг</string>
+    <string name="stats_lines">Написано строк кода</string>
+    <string name="stats_projects">Проектов</string>
 </resources>
