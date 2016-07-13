@@ -1,76 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:id="@+id/stats"
               android:orientation="horizontal"
               android:layout_width="match_parent"
-              android:layout_height="100dp"
-              android:paddingTop="24dp"
-              android:paddingBottom="24dp"
-              android:background="@color/grey">
+              android:layout_height="@dimen/stats_height"
+              android:gravity="center_vertical"
+              android:background="@color/grey"
+              app:layout_behavior="com.softdesign.devintensive.ui.behaviors.UserStatsBehavior"
+              android:elevation="3dp">
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="@dimen/stats_min_height"
         android:orientation="vertical"
         android:layout_weight="0.75" >
         <TextView
+            android:id="@+id/stats_rating"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="5"
-            android:textSize="20sp"
+            android:textSize="@dimen/text_20"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Рейтинг"
-            android:textSize="14sp"
+            android:text="@string/user_profile.stats.rating"
+            android:textSize="@dimen/text_14"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
     </LinearLayout>
     <View
         android:layout_width="1dp"
-        android:layout_height="match_parent"
+        android:layout_height="@dimen/stats_min_height"
         android:background="@color/white" />
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="@dimen/stats_min_height"
         android:orientation="vertical"
         android:layout_weight="0.5" >
         <TextView
+            android:id="@+id/stats_lines"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="5"
-            android:textSize="20sp"
+            android:textSize="@dimen/text_20"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Написано строк кода"
-            android:textSize="14sp"
+            android:text="@string/user_profile.stats.lines"
+            android:textSize="@dimen/text_14"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
     </LinearLayout>
     <View
         android:layout_width="1dp"
-        android:layout_height="match_parent"
+        android:layout_height="@dimen/stats_min_height"
         android:background="@color/white" />
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="104dp"
+        android:layout_height="@dimen/stats_min_height"
         android:orientation="vertical"
         android:layout_weight="0.75" >
         <TextView
+            android:id="@+id/stats_projects"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="5"
-            android:textSize="20sp"
+            android:textSize="@dimen/text_20"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Проектов"
-            android:textSize="14sp"
+            android:text="@string/user_profile.stats.projects"
+            android:textSize="@dimen/text_14"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
     </LinearLayout>

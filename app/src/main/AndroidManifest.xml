@@ -8,6 +8,9 @@
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -15,7 +18,8 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:name=".utils.DevIntensiveApplication">
-        <activity android:name=".ui.activities.MainActivity">
+        <activity android:name=".ui.activities.MainActivity"/>
+        <activity android:name=".ui.activities.AuthActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

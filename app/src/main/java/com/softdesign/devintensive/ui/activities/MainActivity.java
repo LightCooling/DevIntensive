@@ -5,7 +5,9 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -17,9 +19,10 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
-import android.support.design.widget.SwipeDismissBehavior;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -27,26 +30,27 @@ import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.softdesign.devintensive.R;
 import com.softdesign.devintensive.data.managers.DataManager;
 import com.softdesign.devintensive.utils.ConstantManager;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.jar.Manifest;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener{
 
@@ -55,6 +59,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     private DataManager mDataManager;
     private int mCurrentEditMode = 0;
 
+    private NavigationView mNavigationView;
     private CoordinatorLayout mCoordinatorLayout;
     private Toolbar mToolbar;
     private DrawerLayout mNavigationDrawer;
@@ -67,15 +72,20 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     private EditText mUserPhone, mUserEmail, mUserVk, mUserGithub, mUserAbout;
     private List<EditText> mUserInfoViews;
 
+    private TextView mUserValueRating, mUserValueCodeLines, mUserValueProjects;
+    private List<TextView> mUserValueViews;
+
     private AppBarLayout.LayoutParams mAppBarParams;
     private File mPhotoFile = null;
     private Uri mSelectedImage;
 
+    //<editor-fold desc="========== Lifecycle methods ==========">
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mDataManager = DataManager.getInstance();
+        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);
         mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         mNavigationDrawer = (DrawerLayout) findViewById(R.id.navigation_drawer);
@@ -84,6 +94,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         mProfilePlaceholder = (RelativeLayout) findViewById(R.id.profile_placeholder);
         mCollapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
         mProfileImage = (ImageView) findViewById(R.id.user_photo_img);
+
         mUserPhone = (EditText) findViewById(R.id.phone_et);
         mUserEmail = (EditText) findViewById(R.id.email_et);
         mUserVk = (EditText) findViewById(R.id.vk_et);
@@ -95,6 +106,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         mUserInfoViews.add(mUserVk);
         mUserInfoViews.add(mUserGithub);
         mUserInfoViews.add(mUserAbout);
+
+        mUserValueRating = (TextView) findViewById(R.id.stats_rating);
+        mUserValueCodeLines = (TextView) findViewById(R.id.stats_lines);
+        mUserValueProjects = (TextView) findViewById(R.id.stats_projects);
+        mUserValueViews = new ArrayList<>();
+        mUserValueViews.add(mUserValueRating);
+        mUserValueViews.add(mUserValueCodeLines);
+        mUserValueViews.add(mUserValueProjects);
 
         findViewById(R.id.phone_action).setOnClickListener(this);
         findViewById(R.id.email_action).setOnClickListener(this);
@@ -109,14 +128,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            mNavigationDrawer.openDrawer(GravityCompat.START);
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     protected void onStart() {
         super.onStart();
         Log.d(TAG, "onStart");
@@ -125,17 +136,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     @Override
     protected void onResume() {
         super.onResume();
-        loadUserInfoValue();
-        Picasso.with(this)
-                .load(mDataManager.getPreferencesManager().loadUserPhoto())
-                .into(mProfileImage);
+        initUserFields();
+        initUserValue();
+        insertProfileImage(mDataManager.getPreferencesManager().loadUserPhoto());
+        //insertAvatarImage(mDataManager.getPreferencesManager().loadUserAvatar());
         Log.d(TAG, "onResume");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        saveUserInfoValues();
+        saveUserFields();
         Log.d(TAG, "onPause");
     }
 
@@ -156,94 +167,22 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         super.onRestart();
         Log.d(TAG, "onRestart");
     }
+    //</editor-fold>
 
-    private void showSnackbar(String msg) {
-        Snackbar.make(mCoordinatorLayout, msg, Snackbar.LENGTH_SHORT).show();
-    }
-
-    private void setupToolbar() {
-        setSupportActionBar(mToolbar);
-
-        ActionBar actionBar = getSupportActionBar();
-
-        mAppBarParams = (AppBarLayout.LayoutParams) mCollapsingToolbarLayout.getLayoutParams();
-        if (actionBar != null) {
-            actionBar.setHomeAsUpIndicator(R.drawable.ic_menu_white);
-            actionBar.setDisplayHomeAsUpEnabled(true);
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            mNavigationDrawer.openDrawer(GravityCompat.START);
         }
-    }
-
-    private void setupDrawer() {
-        NavigationView navigationView = (NavigationView) findViewById(R.id.navigation_view);
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(MenuItem item) {
-                switch (item.getItemId()) {
-                    case R.id.team_menu:
-                        setContentView(R.layout.auth);
-                }
-                item.setChecked(true);
-                mNavigationDrawer.closeDrawer(GravityCompat.START);
-                return false;
-            }
-        });
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-            case ConstantManager.REQUEST_GALLERY_PICTURE:
-                if (resultCode == RESULT_OK && data != null) {
-                    mSelectedImage = data.getData();
-                    insertProfileImage(mSelectedImage);
-                }
-                break;
-            case ConstantManager.REQUEST_CAMERA_PICTURE:
-                if (resultCode == RESULT_OK && mPhotoFile != null) {
-                    mSelectedImage = Uri.fromFile(mPhotoFile);
-                    insertProfileImage(mSelectedImage);
-                }
-                break;
-        }
-    }
-
-    private void changeEditMode(int mode) {
-        if (mode == 1) {
-            for (EditText userValue: mUserInfoViews) {
-                userValue.setFocusable(true);
-                userValue.setEnabled(true);
-
-                showProfilePlaceholder();
-                lockToolbar();
-                mCollapsingToolbarLayout.setExpandedTitleColor(Color.TRANSPARENT);
-            }
-            mCurrentEditMode = 1;
-        } else {
-            for (EditText userValue: mUserInfoViews) {
-                userValue.setFocusable(false);
-                userValue.setEnabled(false);
-
-                hideProfilePlaceholder();
-                unlockToolbar();
-                mCollapsingToolbarLayout.setExpandedTitleColor(getResources().getColor(R.color.white));
-            }
-            mCurrentEditMode = 0;
-        }
-    }
-
-    private void loadUserInfoValue() {
-        List<String> userData = mDataManager.getPreferencesManager().loadUserProfileData();
-        for (int i = 0; i < userData.size(); i++) {
-            mUserInfoViews.get(i).setText(userData.get(i));
-        }
-    }
-
-    private void saveUserInfoValues() {
-        List<String> userData = new ArrayList<>();
-        for (EditText userFieldView : mUserInfoViews) {
-            userData.add(userFieldView.getText().toString());
-        }
-        mDataManager.getPreferencesManager().saveUserProfileData(userData);
+    public void onBackPressed() {
+        if (mNavigationView.isShown())
+            mNavigationDrawer.closeDrawer(GravityCompat.START);
+        else
+            super.onBackPressed();
     }
 
     @Override
@@ -278,6 +217,142 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         }
     }
 
+    @Override
+    protected Dialog onCreateDialog(int id) {
+        switch (id) {
+            case ConstantManager.LOAD_PROFILE_PHOTO:
+                String[] selectItems = {getString(R.string.user_profile_dialog_gallery), getString(R.string.user_profile_dialog_camera), getString(R.string.user_profile_dialog_cancel)};
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle(R.string.user_profile_dialog_title);
+                builder.setItems(selectItems, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int choiceItem) {
+                        switch (choiceItem) {
+                            case 0:
+                                loadPhotoFromGallery();
+                                break;
+                            case 1:
+                                loadPhotoFromCamera();
+                                break;
+                            case 2:
+                                dialog.cancel();
+                                break;
+                        }
+                    }
+                });
+                return builder.create();
+        }
+        return null;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case ConstantManager.REQUEST_GALLERY_PICTURE:
+                if (resultCode == RESULT_OK && data != null) {
+                    mSelectedImage = data.getData();
+                    insertProfileImage(mSelectedImage);
+                    insertAvatarImage(mSelectedImage);
+                }
+                break;
+            case ConstantManager.REQUEST_CAMERA_PICTURE:
+                if (resultCode == RESULT_OK && mPhotoFile != null) {
+                    mSelectedImage = Uri.fromFile(mPhotoFile);
+                    insertProfileImage(mSelectedImage);
+                    insertAvatarImage(mSelectedImage);
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == ConstantManager.CAMERA_REQUEST_PERMISSION_CODE && grantResults.length == 2) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                loadPhotoFromCamera();
+            }
+        }
+    }
+
+    private void showMessage(String msg) {
+        Snackbar.make(mCoordinatorLayout, msg, Snackbar.LENGTH_SHORT).show();
+    }
+
+    private void setupToolbar() {
+        setSupportActionBar(mToolbar);
+
+        ActionBar actionBar = getSupportActionBar();
+
+        mAppBarParams = (AppBarLayout.LayoutParams) mCollapsingToolbarLayout.getLayoutParams();
+        if (actionBar != null) {
+            actionBar.setHomeAsUpIndicator(R.drawable.ic_menu_white);
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
+    private void setupDrawer() {
+        mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.team_menu:
+                        setContentView(R.layout.activity_auth);
+                }
+                item.setChecked(true);
+                mNavigationDrawer.closeDrawer(GravityCompat.START);
+                return false;
+            }
+        });
+    }
+
+    private void changeEditMode(int mode) {
+        if (mode == 1) {
+            for (EditText userValue: mUserInfoViews) {
+                userValue.setFocusable(true);
+                userValue.setEnabled(true);
+
+                showProfilePlaceholder();
+                lockToolbar();
+                mCollapsingToolbarLayout.setExpandedTitleColor(Color.TRANSPARENT);
+            }
+            mCurrentEditMode = 1;
+        } else {
+            for (EditText userValue: mUserInfoViews) {
+                userValue.setFocusable(false);
+                userValue.setEnabled(false);
+
+                hideProfilePlaceholder();
+                unlockToolbar();
+                mCollapsingToolbarLayout.setExpandedTitleColor(getResources().getColor(R.color.white));
+            }
+            mCurrentEditMode = 0;
+        }
+    }
+
+    private void initUserFields() {
+        List<String> userData = mDataManager.getPreferencesManager().loadUserProfileData();
+        for (int i = 0; i < userData.size(); i++) {
+            mUserInfoViews.get(i).setText(userData.get(i));
+        }
+    }
+
+    private void saveUserFields() {
+        List<String> userData = new ArrayList<>();
+        for (EditText userFieldView : mUserInfoViews) {
+            userData.add(userFieldView.getText().toString());
+        }
+        mDataManager.getPreferencesManager().saveUserProfileData(userData);
+    }
+
+    private void initUserValue() {
+        List<String> userData = mDataManager.getPreferencesManager().loadUserProfileValues();
+        for (int i = 0; i < userData.size(); i++) {
+            mUserValueViews.get(i).setText(userData.get(i));
+        }
+    }
+
+    //<editor-fold desc="========== Set user photos ==========">
     private void loadPhotoFromGallery() {
         Intent takeGalleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         takeGalleryIntent.setType("image/*");
@@ -312,15 +387,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == ConstantManager.CAMERA_REQUEST_PERMISSION_CODE && grantResults.length == 2) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                loadPhotoFromCamera();
-            }
-        }
-    }
-
     private void hideProfilePlaceholder() {
         mProfilePlaceholder.setVisibility(View.GONE);
     }
@@ -329,45 +395,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         mProfilePlaceholder.setVisibility(View.VISIBLE);
     }
 
-    private void lockToolbar() {
-        mAppBarLayout.setExpanded(true, true);
+    private void lockToolbar() {mAppBarLayout.setExpanded(true, true);
         mAppBarParams.setScrollFlags(0);
         mCollapsingToolbarLayout.setLayoutParams(mAppBarParams);
     }
 
     private void unlockToolbar() {
         mAppBarParams.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL
-                | AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS_COLLAPSED);
+                | AppBarLayout.LayoutParams.SCROLL_FLAG_EXIT_UNTIL_COLLAPSED
+                | AppBarLayout.LayoutParams.SCROLL_FLAG_SNAP);
+
         mCollapsingToolbarLayout.setLayoutParams(mAppBarParams);
-    }
-
-    @Override
-    protected Dialog onCreateDialog(int id) {
-        switch (id) {
-            case ConstantManager.LOAD_PROFILE_PHOTO:
-                String[] selectItems = {getString(R.string.user_profile_dialog_gallery), getString(R.string.user_profile_dialog_camera), getString(R.string.user_profile_dialog_cancel)};
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle(R.string.user_profile_dialog_title);
-                builder.setItems(selectItems, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int choiceItem) {
-                        switch (choiceItem) {
-                            case 0:
-                                loadPhotoFromGallery();
-                                break;
-                            case 1:
-                                loadPhotoFromCamera();
-                                break;
-                            case 2:
-                                dialog.cancel();
-                                break;
-                        }
-                    }
-                });
-                return builder.create();
-        }
-        return null;
     }
 
     private File createImageFile() throws IOException {
@@ -390,10 +428,32 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     private void insertProfileImage(Uri image) {
         Picasso.with(this)
                 .load(image)
+                .placeholder(R.drawable.user_bg)
                 .into(mProfileImage);
 
         mDataManager.getPreferencesManager().saveUserPhoto(image);
     }
+
+    private void insertAvatarImage (Uri image) {
+        ImageView headerPhoto = (ImageView) findViewById(R.id.nav_header_avatar);
+        Picasso.with(this).load(image).into(headerPhoto, new Callback() {
+            @Override
+            public void onSuccess() {
+                ImageView headerPhoto = (ImageView) findViewById(R.id.nav_header_avatar);
+                Bitmap bitmap = ((BitmapDrawable) headerPhoto.getDrawable()).getBitmap();
+                RoundedBitmapDrawable roundedImage = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
+                roundedImage.setGravity(Gravity.CENTER);
+                roundedImage.setCircular(true);
+                headerPhoto.setImageDrawable(roundedImage);
+            }
+
+            @Override
+            public void onError() {
+                showMessage("Error loading avatar");
+            }
+        });
+    }
+    //</editor-fold>
 
     public void openApplicationSettings() {
         Intent appSettingsIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()));

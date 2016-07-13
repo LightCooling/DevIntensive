@@ -4,19 +4,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior">
+    app:layout_behavior="com.softdesign.devintensive.ui.behaviors.CustomNestedScrollBehavior">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <include layout="@layout/stats"/>
-
         <!-- Phone number -->
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/size_large">
+            android:layout_height="@dimen/size_large_72">
 
             <ImageView
                 style="@style/icon_left"
@@ -26,17 +24,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="@dimen/spacing_large"
+                android:layout_marginLeft="@dimen/spacing_large_56"
+                android:layout_marginRight="@dimen/spacing_large_56"
                 android:orientation="vertical">
 
                 <TextView
                     style="@style/txt_hint"
-                    android:text="@string/phone_title"/>
+                    android:text="@string/profile.phone.hint"/>
 
                 <EditText
                     android:id="@+id/phone_et"
                     style="@style/txt_value"
-                    android:text="@string/phone_value"/>
+                    android:text="@string/profile.phone.value"/>
             </LinearLayout>
 
             <ImageView
@@ -50,7 +49,7 @@
         <!-- E-mail -->
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/size_large">
+            android:layout_height="@dimen/size_large_72">
 
             <ImageView
                 style="@style/icon_left"
@@ -60,17 +59,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="@dimen/spacing_large"
+                android:layout_marginLeft="@dimen/spacing_large_56"
+                android:layout_marginRight="@dimen/spacing_large_56"
                 android:orientation="vertical">
 
                 <TextView
                     style="@style/txt_hint"
-                    android:text="@string/email_title"/>
+                    android:text="@string/profile.email.hint"/>
 
                 <EditText
                     android:id="@+id/email_et"
                     style="@style/txt_value"
-                    android:text="@string/email_value"/>
+                    android:text="@string/profile.email.value"/>
             </LinearLayout>
 
             <ImageView
@@ -84,7 +84,7 @@
         <!-- Vk.com link -->
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/size_large">
+            android:layout_height="@dimen/size_large_72">
 
             <ImageView
                 style="@style/icon_left"
@@ -94,17 +94,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="@dimen/spacing_large"
+                android:layout_marginLeft="@dimen/spacing_large_56"
+                android:layout_marginRight="@dimen/spacing_large_56"
                 android:orientation="vertical">
 
                 <TextView
                     style="@style/txt_hint"
-                    android:text="@string/vk_title"/>
+                    android:text="@string/profile.vk_title"/>
 
                 <EditText
                     android:id="@+id/vk_et"
                     style="@style/txt_value"
-                    android:text="@string/vk_value"/>
+                    android:text="@string/profile.vk.value"/>
             </LinearLayout>
 
             <ImageView
@@ -118,7 +119,7 @@
         <!-- Github repository -->
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/size_large">
+            android:layout_height="wrap_content">
 
             <ImageView
                 style="@style/icon_left"
@@ -128,17 +129,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="@dimen/spacing_large"
+                android:layout_marginLeft="@dimen/spacing_large_56"
+                android:layout_marginRight="@dimen/spacing_large_56"
                 android:orientation="vertical">
 
                 <TextView
                     style="@style/txt_hint"
-                    android:text="@string/github_title"/>
+                    android:text="@string/profile.github.hint"/>
 
                 <EditText
                     android:id="@+id/github_et"
                     style="@style/txt_value"
-                    android:text="@string/github_value"/>
+                    android:text="@string/profile.github.value"/>
             </LinearLayout>
 
             <ImageView
@@ -162,19 +164,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginBottom="@dimen/spacing_normal"
-                android:layout_marginLeft="@dimen/spacing_large"
-                android:layout_marginRight="@dimen/spacing_normal"
+                android:layout_marginBottom="@dimen/spacing_normal_16"
+                android:layout_marginLeft="@dimen/spacing_large_56"
+                android:layout_marginRight="@dimen/spacing_normal_16"
                 android:orientation="vertical">
 
                 <TextView
                     style="@style/txt_hint"
-                    android:text="@string/about_title"/>
+                    android:text="@string/profile.about.hint"/>
 
                 <EditText
                     android:id="@+id/about_et"
                     style="@style/txt_value"
-                    android:text="@string/about_value"/>
+                    android:text="@string/profile.about.value"/>
             </LinearLayout>
 
         </RelativeLayout>
