@@ -54,12 +54,8 @@ public class UserModelRes {
         @Expose
         private String updated;
 
-        public String getFirstName() {
-            return firstName;
-        }
-
-        public String getSecondName() {
-            return secondName;
+        public String getFullName() {
+            return firstName + " " + secondName;
         }
 
         public Repositories getRepositories() {
