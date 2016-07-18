@@ -14,6 +14,6 @@ public interface RestService {
     @POST("login")
     Call<UserModelRes> loginUser(@Body UserModelReq req);
 
-    @GET("user/list?by=rating")
+    @GET("user/list?orderBy=rating")
     Call<UserListRes> getUserList();
 }

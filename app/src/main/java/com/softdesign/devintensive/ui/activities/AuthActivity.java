@@ -9,6 +9,7 @@ import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -44,18 +45,24 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_auth);
 
         mDataManager = DataManager.getInstance();
 
-        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
-        mSignin = (Button) findViewById(R.id.signin);
-        mRemember = (TextView) findViewById(R.id.remember);
-        mLogin = (EditText) findViewById(R.id.login_et);
-        mPassword = (EditText) findViewById(R.id.password_et);
+        Log.d("Devin", mDataManager.getPreferencesManager().getAuthToken());
+        if (mDataManager.getPreferencesManager().getAuthToken() != null
+                && !mDataManager.getPreferencesManager().getAuthToken().isEmpty()) {
+            startNextActivity(UserListActivity.class);
+        } else {
+            setContentView(R.layout.activity_auth);
+            mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
+            mSignin = (Button) findViewById(R.id.signin);
+            mRemember = (TextView) findViewById(R.id.remember);
+            mLogin = (EditText) findViewById(R.id.login_et);
+            mPassword = (EditText) findViewById(R.id.password_et);
 
-        mSignin.setOnClickListener(this);
-        mRemember.setOnClickListener(this);
+            mSignin.setOnClickListener(this);
+            mRemember.setOnClickListener(this);
+        }
     }
 
     @Override
@@ -74,15 +81,20 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
         Snackbar.make(mCoordinatorLayout, msg, Snackbar.LENGTH_SHORT).show();
     }
 
+    private void startNextActivity(Class activityClass) {
+        Intent authedIntent = new Intent(this, activityClass);
+        startActivity(authedIntent);
+    }
+
     private void loginSuccess(UserModelRes userModel) {
         mDataManager.getPreferencesManager().saveAuthToken(userModel.getData().getToken());
         mDataManager.getPreferencesManager().saveUserId(userModel.getData().getUser().getId());
+        saveUserFullName(userModel);
         saveUserValues(userModel);
         saveUserFields(userModel);
         saveUserPhotos(userModel);
 
-        Intent loginIntent = new Intent(this, MainActivity.class);
-        startActivity(loginIntent);
+        startNextActivity(UserListActivity.class);
     }
 
     private void rememberPassword() {
@@ -113,6 +125,10 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
         } else {
             showMessage("No network connection, try again later");
         }
+    }
+
+    private void saveUserFullName(UserModelRes userModel) {
+        mDataManager.getPreferencesManager().saveUserFullName(userModel.getData().getUser().getFullName());
     }
 
     private void saveUserValues(UserModelRes userModel) {

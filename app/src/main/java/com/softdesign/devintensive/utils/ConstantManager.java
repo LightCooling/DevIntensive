@@ -1,6 +1,7 @@
 package com.softdesign.devintensive.utils;
 
 public interface ConstantManager {
+    String USER_FULL_NAME_KEY = "USER_0_KEY";
     String USER_PHONE_KEY = "USER_1_KEY";
     String USER_MAIL_KEY = "USER_2_KEY";
     String USER_VK_KEY = "USER_3_KEY";
@@ -16,10 +17,11 @@ public interface ConstantManager {
     String USER_CODE_LINES_VALUE = "USER_CODE_LINES_VALUE";
     String USER_PROJECTS_VALUE = "USER_PROJECTS_VALUE";
 
+    String PARCELABLE_KEY = "PARCELABLE_KEY";
+
     int LOAD_PROFILE_PHOTO = 1;
     int REQUEST_CAMERA_PICTURE = 101;
     int REQUEST_GALLERY_PICTURE = 102;
     int PERMISSION_REQUEST_SETTINGS_CODE = 1001;
     int CAMERA_REQUEST_PERMISSION_CODE = 1002;
-    String PARCELABLE_KEY = "PARCELABLE_KEY";
 }

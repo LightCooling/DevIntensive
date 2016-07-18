@@ -47,6 +47,7 @@ import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -125,6 +126,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
         setupToolbar();
         setupDrawer();
+        loadNavHeaderUserInfo();
+        initUserFields();
+        initUserValue();
+        insertProfileImage(mDataManager.getPreferencesManager().loadUserPhoto());
+        insertAvatarImage(mDataManager.getPreferencesManager().loadUserAvatar());
     }
 
     @Override
@@ -136,10 +142,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     @Override
     protected void onResume() {
         super.onResume();
-        initUserFields();
-        initUserValue();
-        insertProfileImage(mDataManager.getPreferencesManager().loadUserPhoto());
-        //insertAvatarImage(mDataManager.getPreferencesManager().loadUserAvatar());
         Log.d(TAG, "onResume");
     }
 
@@ -292,12 +294,24 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     }
 
     private void setupDrawer() {
+        mNavigationView.setCheckedItem(R.id.user_profile_menu);
         mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(MenuItem item) {
                 switch (item.getItemId()) {
-                    case R.id.team_menu:
-                        setContentView(R.layout.activity_auth);
+                    case R.id.all_menu:
+                        Intent userListIntent = new Intent(MainActivity.this, UserListActivity.class);
+                        startActivity(userListIntent);
+                        break;
+                    case R.id.logout_menu:
+                        mDataManager.getPreferencesManager().saveAuthToken("");
+                        mDataManager.getPreferencesManager().saveUserId("");
+                        Intent authIntent = new Intent(MainActivity.this, AuthActivity.class);
+                        authIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(authIntent);
+                        finish();
+                        break;
                 }
                 item.setChecked(true);
                 mNavigationDrawer.closeDrawer(GravityCompat.START);
@@ -328,6 +342,13 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
             }
             mCurrentEditMode = 0;
         }
+    }
+
+    private void loadNavHeaderUserInfo() {
+        ((TextView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_name))
+                .setText(mDataManager.getPreferencesManager().loadUserFullName());
+        ((TextView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_email))
+                .setText(mDataManager.getPreferencesManager().loadUserProfileData().get(1));
     }
 
     private void initUserFields() {
@@ -435,11 +456,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     }
 
     private void insertAvatarImage (Uri image) {
-        ImageView headerPhoto = (ImageView) findViewById(R.id.nav_header_avatar);
+        ImageView headerPhoto = (ImageView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_avatar);
         Picasso.with(this).load(image).into(headerPhoto, new Callback() {
             @Override
             public void onSuccess() {
-                ImageView headerPhoto = (ImageView) findViewById(R.id.nav_header_avatar);
+                ImageView headerPhoto = (ImageView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_avatar);
                 Bitmap bitmap = ((BitmapDrawable) headerPhoto.getDrawable()).getBitmap();
                 RoundedBitmapDrawable roundedImage = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
                 roundedImage.setGravity(Gravity.CENTER);

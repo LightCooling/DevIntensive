@@ -1,10 +1,15 @@
 package com.softdesign.devintensive.ui.activities;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
+import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -15,7 +20,10 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MenuItem;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.softdesign.devintensive.R;
 import com.softdesign.devintensive.data.managers.DataManager;
@@ -24,6 +32,7 @@ import com.softdesign.devintensive.data.network.res.UserModelRes;
 import com.softdesign.devintensive.data.storage.models.UserDTO;
 import com.softdesign.devintensive.ui.adapters.UsersAdapter;
 import com.softdesign.devintensive.utils.ConstantManager;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +70,8 @@ public class UserListActivity extends BaseActivity {
 
         setupToolbar();
         setupDrawer();
+        loadNavHeaderUserInfo();
+        insertAvatarImage(mDataManager.getPreferencesManager().loadUserAvatar());
         loadUsers();
     }
     @Override
@@ -86,16 +97,55 @@ public class UserListActivity extends BaseActivity {
     }
 
     private void setupDrawer() {
+        mNavigationView.setCheckedItem(R.id.all_menu);
         mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(MenuItem item) {
                 switch (item.getItemId()) {
-                    case R.id.team_menu:
-                        setContentView(R.layout.activity_main);
+                    case R.id.user_profile_menu:
+                        Intent userListIntent = new Intent(UserListActivity.this, MainActivity.class);
+                        startActivity(userListIntent);
+                        break;
+                    case R.id.logout_menu:
+                        mDataManager.getPreferencesManager().saveAuthToken("");
+                        mDataManager.getPreferencesManager().saveUserId("");
+                        Intent authIntent = new Intent(UserListActivity.this, AuthActivity.class);
+                        authIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(authIntent);
+                        finish();
+                        break;
                 }
                 item.setChecked(true);
                 mNavigationDrawer.closeDrawer(GravityCompat.START);
                 return false;
+            }
+        });
+    }
+
+    private void loadNavHeaderUserInfo() {
+        ((TextView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_name))
+                .setText(mDataManager.getPreferencesManager().loadUserFullName());
+        ((TextView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_email))
+                .setText(mDataManager.getPreferencesManager().loadUserProfileData().get(1));
+    }
+
+    private void insertAvatarImage (Uri image) {
+        ImageView headerPhoto = (ImageView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_avatar);
+        Picasso.with(this).load(image).into(headerPhoto, new com.squareup.picasso.Callback() {
+            @Override
+            public void onSuccess() {
+                ImageView headerPhoto = (ImageView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_avatar);
+                Bitmap bitmap = ((BitmapDrawable) headerPhoto.getDrawable()).getBitmap();
+                RoundedBitmapDrawable roundedImage = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
+                roundedImage.setGravity(Gravity.CENTER);
+                roundedImage.setCircular(true);
+                headerPhoto.setImageDrawable(roundedImage);
+            }
+
+            @Override
+            public void onError() {
+                showMessage("Error loading avatar");
             }
         });
     }
