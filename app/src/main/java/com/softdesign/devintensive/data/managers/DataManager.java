@@ -3,6 +3,7 @@ package com.softdesign.devintensive.data.managers;
 import com.softdesign.devintensive.data.network.RestService;
 import com.softdesign.devintensive.data.network.ServiceGenerator;
 import com.softdesign.devintensive.data.network.req.UserModelReq;
+import com.softdesign.devintensive.data.network.res.UserListRes;
 import com.softdesign.devintensive.data.network.res.UserModelRes;
 
 import retrofit2.Call;
@@ -33,6 +34,10 @@ public class DataManager {
 
     public Call<UserModelRes> loginUser(UserModelReq userModelReq) {
         return mRestService.loginUser(userModelReq);
+    }
+
+    public Call<UserListRes> getUserList() {
+        return mRestService.getUserList();
     }
     //</editor-fold>
 }

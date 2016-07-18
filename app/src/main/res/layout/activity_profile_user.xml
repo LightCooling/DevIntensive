@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:fitsSystemWindows="true"
+    android:id="@+id/coordinator_layout"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent">
+
+    <android.support.design.widget.AppBarLayout
+        android:background="@color/color_primary"
+        android:fitsSystemWindows="true"
+        android:id="@+id/appbar_layout"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:theme="@style/AppTheme.AppBarOverlay">
+
+        <android.support.design.widget.CollapsingToolbarLayout
+            android:fitsSystemWindows="true"
+            android:id="@+id/collapsing_toolbar"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            app:contentScrim="@color/color_primary"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed|snap">
+
+            <ImageView
+                android:fitsSystemWindows="true"
+                android:id="@+id/user_photo_img"
+                android:layout_height="@dimen/profile_image_size"
+                android:layout_width="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/raspberries"/>
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_height="?attr/actionBarSize"
+                android:layout_width="match_parent"
+                app:theme="@style/ToolBarStyle"
+                android:popupTheme="@style/AppTheme.PopupOverlay"
+                android:titleTextColor="@color/white"
+                app:layout_collapseMode="pin"/>
+        </android.support.design.widget.CollapsingToolbarLayout>
+
+    </android.support.design.widget.AppBarLayout>
+
+    <include layout="@layout/stats"/>
+
+    <include layout="@layout/static_profile_content"/>
+
+</android.support.design.widget.CoordinatorLayout>

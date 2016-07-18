@@ -18,10 +18,11 @@
     <dimen name="size_medium_56">56dp</dimen>
     <dimen name="size_large_72">72dp</dimen>
 
-    <!-- Text sizes -->
-    <dimen name="text_14">14sp</dimen>
-    <dimen name="text_16">16sp</dimen>
-    <dimen name="text_20">20sp</dimen>
+    <!-- Font sizes -->
+    <dimen name="font_normal_14">14sp</dimen>
+    <dimen name="font_medium_16">16sp</dimen>
+    <dimen name="font_big_20">20sp</dimen>
+    <dimen name="font_large_24">24sp</dimen>
 
     <dimen name="stats_min_height">52dp</dimen>
     <dimen name="stats_height">100dp</dimen>

@@ -1,6 +1,7 @@
 package com.softdesign.devintensive.utils;
 
 import android.content.Context;
+import android.util.Log;
 import android.util.TypedValue;
 
 public class UIHelper {
@@ -9,6 +10,10 @@ public class UIHelper {
 
     public static int getStatusBarHeight() {
         int result = 0;
+        if (mContext == null)
+            Log.d("Devint", "context");
+        if (mContext.getResources() == null)
+            Log.d("Devint", "getResources");
         int resourceId = mContext.getResources().getIdentifier("status_bar_height", "dimen", "android");
 
         if (resourceId > 0) {

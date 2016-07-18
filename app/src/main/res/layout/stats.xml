@@ -18,14 +18,14 @@
             android:id="@+id/stats_rating"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/text_20"
+            android:textSize="@dimen/font_big_20"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/user_profile.stats.rating"
-            android:textSize="@dimen/text_14"
+            android:textSize="@dimen/font_normal_14"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
     </LinearLayout>
@@ -42,14 +42,14 @@
             android:id="@+id/stats_lines"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/text_20"
+            android:textSize="@dimen/font_big_20"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/user_profile.stats.lines"
-            android:textSize="@dimen/text_14"
+            android:textSize="@dimen/font_normal_14"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
     </LinearLayout>
@@ -66,14 +66,14 @@
             android:id="@+id/stats_projects"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/text_20"
+            android:textSize="@dimen/font_big_20"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/user_profile.stats.projects"
-            android:textSize="@dimen/text_14"
+            android:textSize="@dimen/font_normal_14"
             android:textColor="@color/white"
             android:layout_gravity="center_horizontal"/>
     </LinearLayout>
