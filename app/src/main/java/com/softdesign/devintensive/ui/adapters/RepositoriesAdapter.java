@@ -46,7 +46,7 @@ public class RepositoriesAdapter extends BaseAdapter {
             itemView = mInflater.inflate(R.layout.item_repositories_list, parent, false);
         }
 
-        TextView repoName = (EditText) itemView.findViewById(R.id.github_txt);
+        TextView repoName = (TextView) itemView.findViewById(R.id.github_txt);
         repoName.setText(mRepoList.get(position));
         return itemView;
     }

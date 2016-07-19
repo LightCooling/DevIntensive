@@ -107,6 +107,10 @@ public class UserModelRes {
         @Expose
         private String title;
 
+        public String getId() {
+            return id;
+        }
+
         public String getGit() {
             return git;
         }

@@ -22,31 +22,35 @@ public class UserListRes {
 
         @SerializedName("_id")
         @Expose
-        public String id;
+        private String id;
         @SerializedName("first_name")
         @Expose
-        public String firstName;
+        private String firstName;
         @SerializedName("second_name")
         @Expose
-        public String secondName;
+        private String secondName;
         @SerializedName("__v")
         @Expose
-        public int v;
+        private int v;
         @SerializedName("repositories")
         @Expose
-        public UserModelRes.Repositories repositories;
+        private UserModelRes.Repositories repositories;
         @SerializedName("profileValues")
         @Expose
-        public UserModelRes.ProfileValues profileValues;
+        private UserModelRes.ProfileValues profileValues;
         @SerializedName("publicInfo")
         @Expose
-        public UserModelRes.PublicInfo publicInfo;
+        private UserModelRes.PublicInfo publicInfo;
         @SerializedName("specialization")
         @Expose
-        public String specialization;
+        private String specialization;
         @SerializedName("updated")
         @Expose
-        public String updated;
+        private String updated;
+
+        public String getId() {
+            return id;
+        }
 
         public String getFullName() {
             return firstName + " " + secondName;

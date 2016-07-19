@@ -7,9 +7,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.redmadrobot.chronos.gui.activity.ChronosAppCompatActivity;
+import com.redmadrobot.chronos.gui.activity.ChronosSupportActivity;
 import com.softdesign.devintensive.R;
 
-public class BaseActivity extends AppCompatActivity{
+public class BaseActivity extends ChronosAppCompatActivity {
     static final String TAG = "BaseActivity";
     protected ProgressDialog mProgressDialog;
 
@@ -17,7 +19,7 @@ public class BaseActivity extends AppCompatActivity{
         if (mProgressDialog == null) {
             mProgressDialog = new ProgressDialog(this, R.style.custom_dialog);
             mProgressDialog.setCancelable(false);
-            mProgressDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            mProgressDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#55000000")));
             mProgressDialog.show();
             mProgressDialog.setContentView(R.layout.progress_splash);
         } else {
@@ -31,6 +33,7 @@ public class BaseActivity extends AppCompatActivity{
             if (mProgressDialog.isShowing()) {
                 mProgressDialog.hide();
             }
+            mProgressDialog.dismiss();
         }
     }
 

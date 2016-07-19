@@ -1,11 +1,9 @@
 package com.softdesign.devintensive.ui.activities;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
@@ -18,14 +16,15 @@ import android.widget.TextView;
 import com.softdesign.devintensive.R;
 import com.softdesign.devintensive.data.managers.DataManager;
 import com.softdesign.devintensive.data.network.req.UserModelReq;
+import com.softdesign.devintensive.data.network.res.UserListRes;
 import com.softdesign.devintensive.data.network.res.UserModelRes;
-import com.softdesign.devintensive.utils.ConstantManager;
+import com.softdesign.devintensive.data.storage.models.Repository;
+import com.softdesign.devintensive.data.storage.models.RepositoryDao;
+import com.softdesign.devintensive.data.storage.models.User;
+import com.softdesign.devintensive.data.storage.models.UserDao;
+import com.softdesign.devintensive.utils.AppConfig;
 import com.softdesign.devintensive.utils.NetworkStatusChecker;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,12 +40,16 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
     private EditText mLogin, mPassword;
 
     private DataManager mDataManager;
+    private RepositoryDao mRepositoryDao;
+    private UserDao mUserDao;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         mDataManager = DataManager.getInstance();
+        mRepositoryDao = mDataManager.getDaoSession().getRepositoryDao();
+        mUserDao = mDataManager.getDaoSession().getUserDao();
 
         Log.d("Devin", mDataManager.getPreferencesManager().getAuthToken());
         if (mDataManager.getPreferencesManager().getAuthToken() != null
@@ -93,8 +96,17 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
         saveUserValues(userModel);
         saveUserFields(userModel);
         saveUserPhotos(userModel);
+        saveUsersListInDb();
 
-        startNextActivity(UserListActivity.class);
+        showProgress();
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                hideProgress();
+                startNextActivity(UserListActivity.class);
+            }
+        }, AppConfig.START_DELAY);
     }
 
     private void rememberPassword() {
@@ -110,7 +122,7 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
                 public void onResponse(Call<UserModelRes> call, Response<UserModelRes> response) {
                     if (response.code() == 200) {
                         loginSuccess(response.body());
-                    } else if (response.code() == 403) {
+                    } else if (response.code() == 404) {
                         showMessage("Неверный логин или пароль");
                     } else {
                         showMessage("Ohh, shit happened!");
@@ -158,5 +170,50 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
     private void saveUserPhotos(UserModelRes userModel) {
         mDataManager.getPreferencesManager().saveUserPhoto(Uri.parse(userModel.getData().getUser().getPublicInfo().getPhoto()));
         mDataManager.getPreferencesManager().saveUserAvatar(Uri.parse(userModel.getData().getUser().getPublicInfo().getAvatar()));
+    }
+
+    private void saveUsersListInDb() {
+        Call<UserListRes> call = mDataManager.getUserListFromNetwork();
+
+        call.enqueue(new Callback<UserListRes>() {
+            @Override
+            public void onResponse(Call<UserListRes> call, Response<UserListRes> response) {
+                try {
+                    if (response.code() == 200) {
+                        List<Repository> allRepositories = new ArrayList<>();
+                        List<User> allUsers = new ArrayList<>();
+
+                        for (UserListRes.Datum userRes : response.body().getData()) {
+                            allRepositories.addAll(getRepoListFromUserRes(userRes));
+                            allUsers.add(new User(userRes));
+                        }
+
+                        mRepositoryDao.insertOrReplaceInTx(allRepositories);
+                        mUserDao.insertOrReplaceInTx(allUsers);
+                    } else {
+                        showMessage("Ошибка при получении списка пользователей");
+                        Log.e("AuthActivity", "onResponse: " + String.valueOf(response.errorBody().source()));
+                    }
+                } catch (NullPointerException e) {
+                    Log.e("UserListActivity", e.toString());
+                    showMessage(e.toString());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UserListRes> call, Throwable t) {
+
+            }
+        });
+    }
+
+    private List<Repository> getRepoListFromUserRes(UserListRes.Datum userData) {
+        final String userId = userData.getId();
+
+        List<Repository> repositories = new ArrayList<>();
+        for (UserModelRes.Repo repositoryRes : userData.getRepositories().getRepo()) {
+            repositories.add(new Repository(repositoryRes, userId));
+        }
+        return repositories;
     }
 }
