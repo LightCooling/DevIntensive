@@ -114,4 +114,14 @@ public class PreferencesManager {
     public String getUserId() {
         return mSharedPreferences.getString(ConstantManager.USER_ID_KEY, "");
     }
+
+    public void saveLastEmail(String email) {
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.putString(ConstantManager.USER_EMAIL, email);
+        editor.apply();
+    }
+
+    public String getLastEmail() {
+        return mSharedPreferences.getString(ConstantManager.USER_EMAIL, "");
+    }
 }

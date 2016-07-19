@@ -3,17 +3,22 @@ package com.softdesign.devintensive.ui.activities;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.res.ConfigurationHelper;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import com.softdesign.devintensive.R;
+import com.softdesign.devintensive.data.events.LoginEvent;
+import com.softdesign.devintensive.data.events.UserListSaveEvent;
 import com.softdesign.devintensive.data.managers.DataManager;
 import com.softdesign.devintensive.data.network.req.UserModelReq;
 import com.softdesign.devintensive.data.network.res.UserListRes;
@@ -22,8 +27,8 @@ import com.softdesign.devintensive.data.storage.models.Repository;
 import com.softdesign.devintensive.data.storage.models.RepositoryDao;
 import com.softdesign.devintensive.data.storage.models.User;
 import com.softdesign.devintensive.data.storage.models.UserDao;
-import com.softdesign.devintensive.utils.AppConfig;
 import com.softdesign.devintensive.utils.NetworkStatusChecker;
+import com.squareup.otto.Subscribe;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,11 +37,12 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class AuthActivity extends BaseActivity implements View.OnClickListener {
+public class AuthActivity extends BaseActivity implements View.OnClickListener, TextView.OnEditorActionListener {
+    private static final String TAG = "AuthActivity";
 
     private CoordinatorLayout mCoordinatorLayout;
     private Button mSignin;
-    private TextView mRemember;
+    private TextView mRememberPsw;
     private EditText mLogin, mPassword;
 
     private DataManager mDataManager;
@@ -48,24 +54,34 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
 
         mDataManager = DataManager.getInstance();
+        mDataManager.getBus().register(this);
         mRepositoryDao = mDataManager.getDaoSession().getRepositoryDao();
         mUserDao = mDataManager.getDaoSession().getUserDao();
 
         Log.d("Devin", mDataManager.getPreferencesManager().getAuthToken());
         if (mDataManager.getPreferencesManager().getAuthToken() != null
                 && !mDataManager.getPreferencesManager().getAuthToken().isEmpty()) {
-            startNextActivity(UserListActivity.class);
-        } else {
-            setContentView(R.layout.activity_auth);
-            mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
-            mSignin = (Button) findViewById(R.id.signin);
-            mRemember = (TextView) findViewById(R.id.remember);
-            mLogin = (EditText) findViewById(R.id.login_et);
-            mPassword = (EditText) findViewById(R.id.password_et);
-
-            mSignin.setOnClickListener(this);
-            mRemember.setOnClickListener(this);
+            if (mUserDao.count() == 0) {
+                showProgress();
+                saveUsersListInDb();
+            } else {
+                startNextActivity(UserListActivity.class);
+                return;
+            }
         }
+        setContentView(R.layout.activity_auth);
+        mLogin = (EditText) findViewById(R.id.login_et);
+        mLogin.setText(mDataManager.getPreferencesManager().getLastEmail());
+        mPassword = (EditText) findViewById(R.id.password_et);
+        mSignin = (Button) findViewById(R.id.signin);
+        mRememberPsw = (TextView) findViewById(R.id.remember);
+        while (mCoordinatorLayout == null)
+            mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
+
+        mLogin.setOnEditorActionListener(this);
+        mPassword.setOnEditorActionListener(this);
+        mSignin.setOnClickListener(this);
+        mRememberPsw.setOnClickListener(this);
     }
 
     @Override
@@ -89,24 +105,15 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
         startActivity(authedIntent);
     }
 
+
     private void loginSuccess(UserModelRes userModel) {
+        mDataManager.getPreferencesManager().saveLastEmail(mLogin.getText().toString());
         mDataManager.getPreferencesManager().saveAuthToken(userModel.getData().getToken());
         mDataManager.getPreferencesManager().saveUserId(userModel.getData().getUser().getId());
         saveUserFullName(userModel);
         saveUserValues(userModel);
         saveUserFields(userModel);
         saveUserPhotos(userModel);
-        saveUsersListInDb();
-
-        showProgress();
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                hideProgress();
-                startNextActivity(UserListActivity.class);
-            }
-        }, AppConfig.START_DELAY);
     }
 
     private void rememberPassword() {
@@ -116,26 +123,75 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
 
     private void signin() {
         if (NetworkStatusChecker.isNetworkAvailable(this)) {
+            showProgress();
             Call<UserModelRes> call = mDataManager.loginUser(new UserModelReq(mLogin.getText().toString(), mPassword.getText().toString()));
             call.enqueue(new Callback<UserModelRes>() {
                 @Override
                 public void onResponse(Call<UserModelRes> call, Response<UserModelRes> response) {
-                    if (response.code() == 200) {
-                        loginSuccess(response.body());
-                    } else if (response.code() == 404) {
-                        showMessage("Неверный логин или пароль");
-                    } else {
-                        showMessage("Ohh, shit happened!");
-                    }
+                    mDataManager.getBus().post(new LoginEvent(true, response.code(), response.body()));
                 }
 
                 @Override
                 public void onFailure(Call<UserModelRes> call, Throwable t) {
-
+                    mDataManager.getBus().post(new LoginEvent(false, t));
                 }
             });
         } else {
             showMessage("No network connection, try again later");
+        }
+    }
+
+    @Subscribe
+    @SuppressWarnings("unused")
+    public void loginComplete(LoginEvent event) {
+        if (event.isSuccess()) {
+            if (event.getResponseCode() == 200) {
+                loginSuccess(event.getResponse());
+                saveUsersListInDb();
+            } else if (event.getResponseCode() == 404) {
+                hideProgress();
+                showMessage("Неверный логин или пароль");
+            } else {
+                hideProgress();
+                showMessage("Ohh, shit happened!");
+            }
+        } else {
+            Log.e(TAG, event.getError().toString());
+            showMessage("Невозможно подключиться к серверу");
+        }
+    }
+
+    @Subscribe
+    @SuppressWarnings("unused")
+    public void userListSaveComplete(UserListSaveEvent event) {
+        if (event.isSuccess()) {
+            try {
+                if (event.getResponseCode() == 200) {
+                    List<Repository> allRepositories = new ArrayList<>();
+                    List<User> allUsers = new ArrayList<>();
+
+                    for (UserListRes.Datum userRes : event.getResponse().getData()) {
+                        allRepositories.addAll(getRepoListFromUserRes(userRes));
+                        allUsers.add(new User(userRes));
+                    }
+
+                    mRepositoryDao.insertOrReplaceInTx(allRepositories);
+                    mUserDao.insertOrReplaceInTx(allUsers);
+                    startNextActivity(UserListActivity.class);
+                } else {
+                    hideProgress();
+                    Log.e(TAG, "onResponse: " + event.getResponseCode());
+                    showMessage("Ошибка при получении списка пользователей");
+                }
+            } catch (NullPointerException e) {
+                hideProgress();
+                Log.e(TAG, e.toString());
+                showMessage(e.toString());
+            }
+        } else {
+            hideProgress();
+            Log.e(TAG, event.getError().toString());
+            showMessage("Невозможно подключиться к серверу");
         }
     }
 
@@ -158,11 +214,11 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
         userFields.add(userModel.getData().getUser().getContacts().getEmail());
         userFields.add(userModel.getData().getUser().getContacts().getVk());
         String repos = "";
-        for (UserModelRes.Repo r:
+        for (UserModelRes.Repo r :
                 userModel.getData().getUser().getRepositories().getRepo()) {
             repos += r.getGit() + "\n";
         }
-        userFields.add(repos.substring(0, repos.length()-2));
+        userFields.add(repos.substring(0, repos.length() - 2));
         userFields.add(userModel.getData().getUser().getPublicInfo().getBio());
         mDataManager.getPreferencesManager().saveUserProfileData(userFields);
     }
@@ -178,31 +234,12 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
         call.enqueue(new Callback<UserListRes>() {
             @Override
             public void onResponse(Call<UserListRes> call, Response<UserListRes> response) {
-                try {
-                    if (response.code() == 200) {
-                        List<Repository> allRepositories = new ArrayList<>();
-                        List<User> allUsers = new ArrayList<>();
-
-                        for (UserListRes.Datum userRes : response.body().getData()) {
-                            allRepositories.addAll(getRepoListFromUserRes(userRes));
-                            allUsers.add(new User(userRes));
-                        }
-
-                        mRepositoryDao.insertOrReplaceInTx(allRepositories);
-                        mUserDao.insertOrReplaceInTx(allUsers);
-                    } else {
-                        showMessage("Ошибка при получении списка пользователей");
-                        Log.e("AuthActivity", "onResponse: " + String.valueOf(response.errorBody().source()));
-                    }
-                } catch (NullPointerException e) {
-                    Log.e("UserListActivity", e.toString());
-                    showMessage(e.toString());
-                }
+                mDataManager.getBus().post(new UserListSaveEvent(true, response.code(), response.body()));
             }
 
             @Override
             public void onFailure(Call<UserListRes> call, Throwable t) {
-
+                mDataManager.getBus().post(new UserListSaveEvent(false, t));
             }
         });
     }
@@ -215,5 +252,23 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener {
             repositories.add(new Repository(repositoryRes, userId));
         }
         return repositories;
+    }
+
+    @Override
+    public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
+        if (actionId == EditorInfo.IME_ACTION_NEXT
+                || actionId == EditorInfo.IME_ACTION_GO
+                || (keyEvent.getKeyCode() == KeyEvent.KEYCODE_ENTER
+                && keyEvent.getAction() == KeyEvent.ACTION_UP)) {
+            switch (textView.getId()) {
+                case R.id.login_et:
+                    mPassword.requestFocus();
+                    return true;
+                case R.id.password_et:
+                    signin();
+                    return true;
+            }
+        }
+        return false;
     }
 }

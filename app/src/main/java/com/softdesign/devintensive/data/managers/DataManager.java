@@ -12,6 +12,7 @@ import com.softdesign.devintensive.data.storage.models.DaoSession;
 import com.softdesign.devintensive.data.storage.models.User;
 import com.softdesign.devintensive.data.storage.models.UserDao;
 import com.softdesign.devintensive.utils.DevIntensiveApplication;
+import com.squareup.otto.Bus;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ public class DataManager {
     private RestService mRestService;
     private Picasso mPicasso;
     private DaoSession mDaoSession;
+    private Bus mBus;
 
     public DataManager() {
         this.mContext = DevIntensiveApplication.getContext();
@@ -34,6 +36,7 @@ public class DataManager {
         this.mRestService = ServiceGenerator.createService(RestService.class);
         this.mPicasso = new PicassoCache(mContext).getPicassoInstance();
         this.mDaoSession = DevIntensiveApplication.getDaoSession();
+        this.mBus = new Bus();
     }
 
     public static DataManager getInstance() {
@@ -50,6 +53,9 @@ public class DataManager {
         return mPreferencesManager;
     }
 
+    public Bus getBus() {
+        return mBus;
+    }
 
     //<editor-fold desc="========== Network ==========">
 
@@ -98,5 +104,4 @@ public class DataManager {
     }
 
     //</editor-fold>
-
 }
