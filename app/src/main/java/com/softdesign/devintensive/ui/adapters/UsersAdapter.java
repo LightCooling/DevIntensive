@@ -29,6 +29,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 
+import butterknife.BindDrawable;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
 public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> {
     private static final String TAG = "UsersAdapter";
 
@@ -155,29 +160,31 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 
     public static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        protected AspectRatioImageView userPhoto;
-        protected TextView mFullName, mRating, mCodeLine, mProjects, mBio;
-        private Button mShowMore;
-        protected Drawable mDummy;
+        @BindView(R.id.user_photo_img)
+        AspectRatioImageView userPhoto;
+        @BindView(R.id.user_full_name_txt)
+        TextView mFullName;
+        @BindView(R.id.rating)
+        TextView mRating;
+        @BindView(R.id.code_lines)
+        TextView mCodeLine;
+        @BindView(R.id.projects)
+        TextView mProjects;
+        @BindView(R.id.bio_txt)
+        TextView mBio;
+        @BindDrawable(R.drawable.user_bg)
+        Drawable mDummy;
 
         private CustomClickListener mListener;
 
         public ViewHolder(View itemView, CustomClickListener customClickListener) {
             super(itemView);
+            ButterKnife.bind(this, itemView);
             mListener = customClickListener;
-
-            userPhoto = (AspectRatioImageView) itemView.findViewById(R.id.user_photo_img);
-            mFullName = (TextView) itemView.findViewById(R.id.user_full_name_txt);
-            mRating = (TextView) itemView.findViewById(R.id.rating);
-            mCodeLine = (TextView) itemView.findViewById(R.id.code_lines);
-            mProjects = (TextView) itemView.findViewById(R.id.projects);
-            mBio = (TextView) itemView.findViewById(R.id.bio_txt);
-            mShowMore = (Button) itemView.findViewById(R.id.more_info_btn);
-            mShowMore.setOnClickListener(this);
-            mDummy = userPhoto.getContext().getResources().getDrawable(R.drawable.user_bg);
         }
 
         @Override
+        @OnClick(R.id.more_info_btn)
         public void onClick(View view) {
             if (mListener != null) {
                 mListener.onUserItemClickListener(getAdapterPosition());

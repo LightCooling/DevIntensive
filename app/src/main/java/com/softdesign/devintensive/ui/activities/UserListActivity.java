@@ -46,6 +46,8 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -54,12 +56,18 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
 
     private static final String SHOW_USER_QUERY = "showUsersByQuery";
 
-    private NavigationView mNavigationView;
-    private CoordinatorLayout mCoordinatorLayout;
-    private Toolbar mToolbar;
-    private DrawerLayout mNavigationDrawer;
-    private RecyclerView mRecyclerView;
-    private SwipeRefreshLayout mSwipeRefreshLayout;
+    @BindView(R.id.navigation_view)
+    NavigationView mNavigationView;
+    @BindView(R.id.coordinator_layout)
+    CoordinatorLayout mCoordinatorLayout;
+    @BindView(R.id.toolbar)
+    Toolbar mToolbar;
+    @BindView(R.id.navigation_drawer)
+    DrawerLayout mNavigationDrawer;
+    @BindView(R.id.user_list)
+    RecyclerView mRecyclerView;
+    @BindView(R.id.swipe_layout)
+    SwipeRefreshLayout mSwipeRefreshLayout;
 
     private DataManager mDataManager;
     private UsersAdapter mUsersAdapter;
@@ -73,20 +81,14 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_list);
+        ButterKnife.bind(this);
 
         mDataManager = DataManager.getInstance();
         mDataManager.getBus().register(this);
-        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);
-        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        mNavigationDrawer = (DrawerLayout) findViewById(R.id.navigation_drawer);
-        mRecyclerView = (RecyclerView) findViewById(R.id.user_list);
-        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_layout);
         mSwipeRefreshLayout.setOnRefreshListener(this);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(linearLayoutManager);
-
         mHandler = new Handler();
 
         setupToolbar();
@@ -145,7 +147,6 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
                         finish();
                         break;
                 }
-                item.setChecked(true);
                 mNavigationDrawer.closeDrawer(GravityCompat.START);
                 return false;
             }

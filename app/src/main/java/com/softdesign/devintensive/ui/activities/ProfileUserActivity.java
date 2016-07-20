@@ -26,29 +26,35 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class ProfileUserActivity extends BaseActivity {
 
-    private Toolbar mToolbar;
-    private ImageView mProfileImage;
-    private TextView mUserBio, mUserRating, mUserCodeLines, mUserProjects;
-    private CollapsingToolbarLayout mCollapsingToolbarLayout;
+    @BindView(R.id.toolbar)
+    Toolbar mToolbar;
+    @BindView(R.id.user_photo_img)
+    ImageView mProfileImage;
+    @BindView(R.id.bio_txt)
+    TextView mUserBio;
+    @BindView(R.id.stats_rating)
+    TextView mUserRating;
+    @BindView(R.id.stats_lines)
+    TextView mUserCodeLines;
+    @BindView(R.id.stats_projects)
+    TextView mUserProjects;
+    @BindView(R.id.collapsing_toolbar)
+    CollapsingToolbarLayout mCollapsingToolbarLayout;
 
-    private ListView mRepoListView;
+    @BindView(R.id.repositories_list)
+    ListView mRepoListView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_user);
+        ButterKnife.bind(this);
 
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        mProfileImage = (ImageView) findViewById(R.id.user_photo_img);
-        mUserBio = (TextView) findViewById(R.id.bio_txt);
-        mUserRating = (TextView) findViewById(R.id.stats_rating);
-        mUserCodeLines = (TextView) findViewById(R.id.stats_lines);
-        mUserProjects = (TextView) findViewById(R.id.stats_projects);
-        mCollapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-
-        mRepoListView = (ListView) findViewById(R.id.repositories_list);
         setupToolbar();
         initProfileData();
     }

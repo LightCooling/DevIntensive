@@ -2,6 +2,7 @@ package com.softdesign.devintensive.ui.activities;
 
 import android.app.Dialog;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -16,9 +17,9 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
@@ -33,25 +34,30 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.softdesign.devintensive.R;
 import com.softdesign.devintensive.data.managers.DataManager;
+import com.softdesign.devintensive.ui.views.RegExValidateWatcher;
 import com.softdesign.devintensive.utils.ConstantManager;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import butterknife.BindView;
+import butterknife.BindViews;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener{
 
@@ -60,21 +66,36 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     private DataManager mDataManager;
     private int mCurrentEditMode = 0;
 
-    private NavigationView mNavigationView;
-    private CoordinatorLayout mCoordinatorLayout;
-    private Toolbar mToolbar;
-    private DrawerLayout mNavigationDrawer;
-    private AppBarLayout mAppBarLayout;
-    private FloatingActionButton mFab;
-    private RelativeLayout mProfilePlaceholder;
-    private CollapsingToolbarLayout mCollapsingToolbarLayout;
-    private ImageView mProfileImage;
+    @BindView(R.id.navigation_view)
+    NavigationView mNavigationView;
+    @BindView(R.id.coordinator_layout)
+    CoordinatorLayout mCoordinatorLayout;
+    @BindView(R.id.toolbar)
+    Toolbar mToolbar;
+    @BindView(R.id.navigation_drawer)
+    DrawerLayout mNavigationDrawer;
+    @BindView(R.id.appbar_layout)
+    AppBarLayout mAppBarLayout;
+    @BindView(R.id.profile_placeholder)
+    RelativeLayout mProfilePlaceholder;
+    @BindView(R.id.collapsing_toolbar)
+    CollapsingToolbarLayout mCollapsingToolbarLayout;
+    @BindView(R.id.user_photo_img)
+    ImageView mProfileImage;
 
-    private EditText mUserPhone, mUserEmail, mUserVk, mUserGithub, mUserAbout;
-    private List<EditText> mUserInfoViews;
+    @BindView(R.id.phone_et)
+    EditText mUserPhone;
+    @BindView(R.id.email_et)
+    EditText mUserEmail;
+    @BindView(R.id.vk_et)
+    EditText mUserVk;
+    @BindView(R.id.github_et)
+    EditText mUserGithub;
+    @BindViews({R.id.phone_et, R.id.email_et, R.id.vk_et, R.id.github_et, R.id.about_et})
+    List<EditText> mUserInfoViews;
 
-    private TextView mUserValueRating, mUserValueCodeLines, mUserValueProjects;
-    private List<TextView> mUserValueViews;
+    @BindViews({ R.id.stats_rating, R.id.stats_lines, R.id.stats_projects })
+    List<TextView> mUserValueViews;
 
     private AppBarLayout.LayoutParams mAppBarParams;
     private File mPhotoFile = null;
@@ -86,43 +107,28 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mDataManager = DataManager.getInstance();
-        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);
-        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        mNavigationDrawer = (DrawerLayout) findViewById(R.id.navigation_drawer);
-        mAppBarLayout = (AppBarLayout) findViewById(R.id.appbar_layout);
-        mFab = (FloatingActionButton) findViewById(R.id.fab);
-        mProfilePlaceholder = (RelativeLayout) findViewById(R.id.profile_placeholder);
-        mCollapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-        mProfileImage = (ImageView) findViewById(R.id.user_photo_img);
+        ButterKnife.bind(this);
 
-        mUserPhone = (EditText) findViewById(R.id.phone_et);
-        mUserEmail = (EditText) findViewById(R.id.email_et);
-        mUserVk = (EditText) findViewById(R.id.vk_et);
-        mUserGithub = (EditText) findViewById(R.id.github_et);
-        mUserAbout = (EditText) findViewById(R.id.about_et);
-        mUserInfoViews = new ArrayList<>();
-        mUserInfoViews.add(mUserPhone);
-        mUserInfoViews.add(mUserEmail);
-        mUserInfoViews.add(mUserVk);
-        mUserInfoViews.add(mUserGithub);
-        mUserInfoViews.add(mUserAbout);
-
-        mUserValueRating = (TextView) findViewById(R.id.stats_rating);
-        mUserValueCodeLines = (TextView) findViewById(R.id.stats_lines);
-        mUserValueProjects = (TextView) findViewById(R.id.stats_projects);
-        mUserValueViews = new ArrayList<>();
-        mUserValueViews.add(mUserValueRating);
-        mUserValueViews.add(mUserValueCodeLines);
-        mUserValueViews.add(mUserValueProjects);
-
-        findViewById(R.id.phone_action).setOnClickListener(this);
-        findViewById(R.id.email_action).setOnClickListener(this);
-        findViewById(R.id.vk_action).setOnClickListener(this);
-        findViewById(R.id.github_action).setOnClickListener(this);
-
-        mFab.setOnClickListener(this);
-        mProfilePlaceholder.setOnClickListener(this);
+        mUserPhone.addTextChangedListener(
+                new RegExValidateWatcher(getString(R.string.pattern_phone),
+                        getString(R.string.profile_phone_error),
+                        (TextInputLayout) mUserPhone.getParent(),
+                        (ImageView) findViewById(R.id.phone_action)));
+        mUserEmail.addTextChangedListener(
+                new RegExValidateWatcher(getString(R.string.pattern_email),
+                        getString(R.string.profile_email_error),
+                        (TextInputLayout) mUserEmail.getParent(),
+                        (ImageView) findViewById(R.id.email_action)));
+        mUserVk.addTextChangedListener(
+                new RegExValidateWatcher(getString(R.string.pattern_vk),
+                        getString(R.string.profile_vk_error),
+                        (TextInputLayout) mUserVk.getParent(),
+                        (ImageView) findViewById(R.id.vk_action)));
+        mUserGithub.addTextChangedListener(
+                new RegExValidateWatcher(getString(R.string.pattern_github),
+                        getString(R.string.profile_github_error),
+                        (TextInputLayout) mUserGithub.getParent(),
+                        (ImageView) findViewById(R.id.github_action)));
 
         setupToolbar();
         setupDrawer();
@@ -188,6 +194,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     }
 
     @Override
+    @OnClick({R.id.fab, R.id.profile_placeholder, R.id.phone_action, R.id.email_action, R.id.vk_action, R.id.github_action})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.fab:
@@ -324,22 +331,30 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         if (mode == 1) {
             for (EditText userValue: mUserInfoViews) {
                 userValue.setFocusable(true);
+                userValue.setFocusableInTouchMode(true);
                 userValue.setEnabled(true);
-
-                showProfilePlaceholder();
-                lockToolbar();
-                mCollapsingToolbarLayout.setExpandedTitleColor(Color.TRANSPARENT);
             }
+            mUserPhone.requestFocus();
+            final InputMethodManager inputMethodManager =
+                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputMethodManager.showSoftInput(mUserPhone, InputMethodManager.SHOW_IMPLICIT);
+            showProfilePlaceholder();
+            lockToolbar();
+            mCollapsingToolbarLayout.setExpandedTitleColor(Color.TRANSPARENT);
             mCurrentEditMode = 1;
         } else {
             for (EditText userValue: mUserInfoViews) {
                 userValue.setFocusable(false);
+                userValue.setFocusableInTouchMode(false);
                 userValue.setEnabled(false);
-
-                hideProfilePlaceholder();
-                unlockToolbar();
-                mCollapsingToolbarLayout.setExpandedTitleColor(getResources().getColor(R.color.white));
             }
+            final InputMethodManager inputMethodManager =
+                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
+                    InputMethodManager.HIDE_NOT_ALWAYS);
+            hideProfilePlaceholder();
+            unlockToolbar();
+            mCollapsingToolbarLayout.setExpandedTitleColor(getResources().getColor(R.color.white));
             mCurrentEditMode = 0;
         }
     }

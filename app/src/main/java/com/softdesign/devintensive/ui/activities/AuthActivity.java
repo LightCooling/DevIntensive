@@ -1,5 +1,6 @@
 package com.softdesign.devintensive.ui.activities;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -27,6 +29,10 @@ import com.squareup.otto.Subscribe;
 import java.util.ArrayList;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import butterknife.OnEditorAction;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -34,14 +40,14 @@ import retrofit2.Response;
 public class AuthActivity extends BaseActivity implements View.OnClickListener, TextView.OnEditorActionListener {
     private static final String TAG = "AuthActivity";
 
-    private CoordinatorLayout mCoordinatorLayout;
-    private Button mSignin;
-    private TextView mRememberPsw;
-    private EditText mLogin, mPassword;
+    @BindView(R.id.coordinator_layout)
+    CoordinatorLayout mCoordinatorLayout;
+    @BindView(R.id.login_et)
+    EditText mLogin;
+    @BindView(R.id.password_et)
+    EditText mPassword;
 
     private DataManager mDataManager;
-    private RepositoryDao mRepositoryDao;
-    private UserDao mUserDao;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,8 +55,6 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
 
         mDataManager = DataManager.getInstance();
         mDataManager.getBus().register(this);
-        mRepositoryDao = mDataManager.getDaoSession().getRepositoryDao();
-        mUserDao = mDataManager.getDaoSession().getUserDao();
 
         Log.d("Devin", mDataManager.getPreferencesManager().getAuthToken());
         if (mDataManager.getPreferencesManager().getAuthToken() != null
@@ -59,21 +63,12 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
             return;
         }
         setContentView(R.layout.activity_auth);
-        mLogin = (EditText) findViewById(R.id.login_et);
+        ButterKnife.bind(this);
         mLogin.setText(mDataManager.getPreferencesManager().getLastEmail());
-        mPassword = (EditText) findViewById(R.id.password_et);
-        mSignin = (Button) findViewById(R.id.signin);
-        mRememberPsw = (TextView) findViewById(R.id.remember);
-        while (mCoordinatorLayout == null)
-            mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
-
-        mLogin.setOnEditorActionListener(this);
-        mPassword.setOnEditorActionListener(this);
-        mSignin.setOnClickListener(this);
-        mRememberPsw.setOnClickListener(this);
     }
 
     @Override
+    @OnClick({R.id.signin, R.id.remember})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.signin:
@@ -187,6 +182,7 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     @Override
+    @OnEditorAction({R.id.login_et, R.id.password_et})
     public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
         if (actionId == EditorInfo.IME_ACTION_NEXT
                 || actionId == EditorInfo.IME_ACTION_GO
@@ -197,6 +193,10 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
                     mPassword.requestFocus();
                     return true;
                 case R.id.password_et:
+                    final InputMethodManager inputMethodManager =
+                            (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
+                            InputMethodManager.HIDE_IMPLICIT_ONLY);
                     signin();
                     return true;
             }
