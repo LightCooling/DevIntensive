@@ -15,6 +15,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
@@ -69,6 +70,7 @@ import retrofit2.Response;
 public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
+    private static final String EDIT_MODE_KEY = "EDIT_MODE_KEY";
     private static final int MODE_READ_ONLY = 0;
     private static final int MODE_EDIT = 1;
 
@@ -146,6 +148,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         initUserValue();
         insertProfileImage(mDataManager.getPreferencesManager().loadUserPhoto());
         insertAvatarImage(mDataManager.getPreferencesManager().loadUserAvatar());
+        if (savedInstanceState != null) {
+            changeEditMode(savedInstanceState.getInt(EDIT_MODE_KEY));
+        }
     }
 
     @Override
@@ -183,6 +188,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     protected void onRestart() {
         super.onRestart();
         Log.d(TAG, "onRestart");
+    }
+
+    @Override
+    protected void onSaveInstanceState(@Nullable Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (outState != null) {
+            outState.putInt(EDIT_MODE_KEY, mCurrentEditMode);
+        }
     }
     //</editor-fold>
 
@@ -363,10 +376,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 userValue.setFocusableInTouchMode(false);
                 userValue.setEnabled(false);
             }
-            final InputMethodManager inputMethodManager =
-                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
-                    InputMethodManager.HIDE_NOT_ALWAYS);
+            try {
+                final InputMethodManager inputMethodManager =
+                        (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
             hideProfilePlaceholder();
             unlockToolbar();
             mCollapsingToolbarLayout.setExpandedTitleColor(getResources().getColor(R.color.white));

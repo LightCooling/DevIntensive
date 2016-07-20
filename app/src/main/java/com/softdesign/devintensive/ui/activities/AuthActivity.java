@@ -169,7 +169,12 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
         String repos = "";
         for (UserModelRes.Repo r :
                 userModel.getData().getUser().getRepositories().getRepo()) {
-            repos += r.getGit() + "\n";
+            String git = r.getGit();
+            if (git.contains("http://"))
+                git = git.replace("http://", "");
+            if (git.contains("https://"))
+                git = git.replace("https://", "");
+            repos += git + "\n";
         }
         userFields.add(repos.substring(0, repos.length() - 2));
         userFields.add(userModel.getData().getUser().getPublicInfo().getBio());

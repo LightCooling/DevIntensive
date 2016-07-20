@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -54,7 +55,9 @@ import retrofit2.Response;
 
 public class UserListActivity extends BaseActivity implements SwipeRefreshLayout.OnRefreshListener {
 
+    static final String TAG = "UserListActivity";
     private static final String SHOW_USER_QUERY = "showUsersByQuery";
+    private static final String SEARCH_QUERY = "SEARCH_QUERY";
 
     @BindView(R.id.navigation_view)
     NavigationView mNavigationView;
@@ -73,9 +76,9 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
     private UsersAdapter mUsersAdapter;
     private List<User> mUsers;
 
-    private MenuItem mSearchItem;
     private String mQuery;
     private Handler mHandler;
+    private Runnable mSearchUsers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,7 +103,24 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
         if (mDataManager.getDaoSession().getUserDao().count() == 0) {
             saveUsersListInDb();
         } else {
-            runOperation(new ShowUsersOperation(null));
+            if (savedInstanceState == null) {
+                runOperation(new ShowUsersOperation(null));
+            } else {
+                mQuery = savedInstanceState.getString(SEARCH_QUERY);
+
+                if (mQuery != null && !mQuery.isEmpty())
+                    runOperation(new ShowUsersOperation(mQuery));
+                else
+                    runOperation(new ShowUsersOperation(null));
+            }
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@Nullable Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (outState != null) {
+            outState.putString(SEARCH_QUERY, mQuery);
         }
     }
 
@@ -206,7 +226,7 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.search_menu, menu);
-        mSearchItem = menu.findItem(R.id.search_action);
+        MenuItem mSearchItem = menu.findItem(R.id.search_action);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(mSearchItem);
         searchView.setQueryHint("Введите имя пользователя");
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -225,6 +245,11 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
                 return false;
             }
         });
+        if (mQuery != null && !mQuery.isEmpty()) {
+            searchView.setQuery(mQuery, false);
+            searchView.setIconified(false);
+            searchView.clearFocus();
+        }
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -271,16 +296,16 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
     private void showUsersByQuery(String query) {
         mQuery = query;
 
-        Runnable searchUsers = new Runnable() {
+        if (mSearchUsers != null)
+            mHandler.removeCallbacks(mSearchUsers);
+        cancelOperation(SHOW_USER_QUERY);
+        mSearchUsers = new Runnable() {
             @Override
             public void run() {
-                showProgress();
                 runOperation(new ShowUsersOperation(mQuery), SHOW_USER_QUERY);
             }
         };
-        mHandler.removeCallbacks(searchUsers);
-        cancelOperation(SHOW_USER_QUERY);
-        mHandler.postDelayed(searchUsers, ConstantManager.SEARCH_DELAY);
+        mHandler.postDelayed(mSearchUsers, ConstantManager.SEARCH_DELAY);
     }
 
     @SuppressWarnings("unused")

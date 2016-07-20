@@ -22,7 +22,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ui.activities.MainActivity"/>
+        <activity android:name=".ui.activities.MainActivity" android:launchMode="singleTask"/>
         <activity android:name=".ui.activities.AuthActivity" android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -30,7 +30,7 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".ui.activities.UserListActivity"/>
+        <activity android:name=".ui.activities.UserListActivity" android:launchMode="singleTask"/>
         <activity
             android:name=".ui.activities.ProfileUserActivity"
             android:parentActivityName=".ui.activities.UserListActivity">
