@@ -196,7 +196,7 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
                     final InputMethodManager inputMethodManager =
                             (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
-                            InputMethodManager.HIDE_IMPLICIT_ONLY);
+                            InputMethodManager.HIDE_NOT_ALWAYS);
                     signin();
                     return true;
             }

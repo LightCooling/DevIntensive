@@ -6,6 +6,7 @@ import com.softdesign.devintensive.data.network.PicassoCache;
 import com.softdesign.devintensive.data.network.RestService;
 import com.softdesign.devintensive.data.network.ServiceGenerator;
 import com.softdesign.devintensive.data.network.req.UserModelReq;
+import com.softdesign.devintensive.data.network.res.UploadPhotoRes;
 import com.softdesign.devintensive.data.network.res.UserListRes;
 import com.softdesign.devintensive.data.network.res.UserModelRes;
 import com.softdesign.devintensive.data.storage.models.DaoSession;
@@ -18,6 +19,8 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.MultipartBody;
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 
 public class DataManager {
@@ -65,6 +68,14 @@ public class DataManager {
 
     public Call<UserListRes> getUserListFromNetwork() {
         return mRestService.getUserList();
+    }
+
+    public Call<UploadPhotoRes> uploadPhoto(MultipartBody.Part file) {
+        return mRestService.uploadPhoto(getPreferencesManager().getUserId(), file);
+    }
+
+    public Call<UploadPhotoRes> uploadAvatar(MultipartBody.Part file) {
+        return mRestService.uploadAvatar(getPreferencesManager().getUserId(), file);
     }
 
     //</editor-fold>

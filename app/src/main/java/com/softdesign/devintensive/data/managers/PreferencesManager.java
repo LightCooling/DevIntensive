@@ -44,7 +44,12 @@ public class PreferencesManager {
     public void saveUserProfileData(List<String> userFields) {
         SharedPreferences.Editor editor = mSharedPreferences.edit();
         for (int i = 0; i < USER_FIELDS.length; i++) {
-            editor.putString(USER_FIELDS[i], userFields.get(i));
+            String userField = userFields.get(i);
+            if (userField.contains("http://"))
+                userField.replace("http://", "");
+            else if (userField.contains("https://"))
+                userField.replace("https://", "");
+            editor.putString(USER_FIELDS[i], userField);
         }
         editor.apply();
     }

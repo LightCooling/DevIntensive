@@ -149,10 +149,12 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
                 .setCallback(new Snackbar.Callback() {
                     @Override
                     public void onDismissed(Snackbar snackbar, int event) {
-                        pendingRemovalPosition.remove();
-                        User user = pendingRemoval.remove();
-                        DataManager.getInstance().getBus().post(new RemoveUserEvent(user));
-                        super.onDismissed(snackbar, event);
+                        if (event != DISMISS_EVENT_ACTION) {
+                            pendingRemovalPosition.remove();
+                            User user = pendingRemoval.remove();
+                            DataManager.getInstance().getBus().post(new RemoveUserEvent(user));
+                            super.onDismissed(snackbar, event);
+                        }
                     }
                 })
                 .show();

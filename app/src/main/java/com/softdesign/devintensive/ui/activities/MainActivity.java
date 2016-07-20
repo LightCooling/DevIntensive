@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -42,6 +43,7 @@ import android.widget.TextView;
 
 import com.softdesign.devintensive.R;
 import com.softdesign.devintensive.data.managers.DataManager;
+import com.softdesign.devintensive.data.network.res.UploadPhotoRes;
 import com.softdesign.devintensive.ui.views.RegExValidateWatcher;
 import com.softdesign.devintensive.utils.ConstantManager;
 import com.squareup.picasso.Callback;
@@ -58,13 +60,20 @@ import butterknife.BindView;
 import butterknife.BindViews;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import retrofit2.Call;
+import retrofit2.Response;
 
-public class MainActivity extends BaseActivity implements View.OnClickListener{
+public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
+    private static final int MODE_READ_ONLY = 0;
+    private static final int MODE_EDIT = 1;
 
     private DataManager mDataManager;
-    private int mCurrentEditMode = 0;
+    private int mCurrentEditMode = MODE_READ_ONLY;
 
     @BindView(R.id.navigation_view)
     NavigationView mNavigationView;
@@ -94,7 +103,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     @BindViews({R.id.phone_et, R.id.email_et, R.id.vk_et, R.id.github_et, R.id.about_et})
     List<EditText> mUserInfoViews;
 
-    @BindViews({ R.id.stats_rating, R.id.stats_lines, R.id.stats_projects })
+    @BindViews({R.id.stats_rating, R.id.stats_lines, R.id.stats_projects})
     List<TextView> mUserValueViews;
 
     private AppBarLayout.LayoutParams mAppBarParams;
@@ -198,10 +207,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.fab:
-                if (mCurrentEditMode == 0)
-                    changeEditMode(1);
+                if (mCurrentEditMode == MODE_READ_ONLY)
+                    changeEditMode(MODE_EDIT);
                 else
-                    changeEditMode(0);
+                    changeEditMode(MODE_READ_ONLY);
                 break;
             case R.id.profile_placeholder:
                 showDialog(ConstantManager.LOAD_PROFILE_PHOTO);
@@ -263,6 +272,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
                     mSelectedImage = data.getData();
                     insertProfileImage(mSelectedImage);
                     insertAvatarImage(mSelectedImage);
+                    uploadUserPhotos();
                 }
                 break;
             case ConstantManager.REQUEST_CAMERA_PICTURE:
@@ -270,6 +280,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
                     mSelectedImage = Uri.fromFile(mPhotoFile);
                     insertProfileImage(mSelectedImage);
                     insertAvatarImage(mSelectedImage);
+                    uploadUserPhotos();
                 }
                 break;
         }
@@ -280,6 +291,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         if (requestCode == ConstantManager.CAMERA_REQUEST_PERMISSION_CODE && grantResults.length == 2) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 loadPhotoFromCamera();
+            }
+        } else if (requestCode == ConstantManager.UPLOAD_REQUEST_PERMISSION_CODE && grantResults.length == 1) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                uploadUserPhotos();
             }
         }
     }
@@ -328,8 +343,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     }
 
     private void changeEditMode(int mode) {
-        if (mode == 1) {
-            for (EditText userValue: mUserInfoViews) {
+        if (mode == MODE_EDIT) {
+            for (EditText userValue : mUserInfoViews) {
                 userValue.setFocusable(true);
                 userValue.setFocusableInTouchMode(true);
                 userValue.setEnabled(true);
@@ -343,7 +358,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
             mCollapsingToolbarLayout.setExpandedTitleColor(Color.TRANSPARENT);
             mCurrentEditMode = 1;
         } else {
-            for (EditText userValue: mUserInfoViews) {
+            for (EditText userValue : mUserInfoViews) {
                 userValue.setFocusable(false);
                 userValue.setFocusableInTouchMode(false);
                 userValue.setEnabled(false);
@@ -413,7 +428,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
                     android.Manifest.permission.CAMERA,
                     android.Manifest.permission.WRITE_EXTERNAL_STORAGE
             }, ConstantManager.CAMERA_REQUEST_PERMISSION_CODE);
-            Snackbar.make(mCoordinatorLayout, "Для корректной работы приложения неоюходимо дать требуемые разрешения", Snackbar.LENGTH_LONG)
+            Snackbar.make(mCoordinatorLayout, "Для корректной работы приложения необходимо дать требуемые разрешения", Snackbar.LENGTH_LONG)
                     .setAction("Разрешить", new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
@@ -431,7 +446,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         mProfilePlaceholder.setVisibility(View.VISIBLE);
     }
 
-    private void lockToolbar() {mAppBarLayout.setExpanded(true, true);
+    private void lockToolbar() {
+        mAppBarLayout.setExpanded(true, true);
         mAppBarParams.setScrollFlags(0);
         mCollapsingToolbarLayout.setLayoutParams(mAppBarParams);
     }
@@ -470,9 +486,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         mDataManager.getPreferencesManager().saveUserPhoto(image);
     }
 
-    private void insertAvatarImage (Uri image) {
+    private void insertAvatarImage(Uri image) {
         ImageView headerPhoto = (ImageView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_avatar);
-        Picasso.with(this).load(image).into(headerPhoto, new Callback() {
+        Picasso.with(this).load(image).fit().into(headerPhoto, new Callback() {
             @Override
             public void onSuccess() {
                 ImageView headerPhoto = (ImageView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_avatar);
@@ -488,6 +504,74 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
                 showMessage("Error loading avatar");
             }
         });
+    }
+
+    private void uploadUserPhotos() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            String filePath;
+            if (mSelectedImage != null && "content".equals(mSelectedImage.getScheme())) {
+                Cursor cursor = this.getContentResolver().query(mSelectedImage, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
+                cursor.moveToFirst();
+                filePath = cursor.getString(0);
+                cursor.close();
+            } else {
+                filePath = mSelectedImage.getPath();
+            }
+            File file = new File(filePath);
+            final RequestBody requestFile =
+                    RequestBody.create(MediaType.parse("multipart/form-data"), file);
+            MultipartBody.Part body =
+                    MultipartBody.Part.createFormData("photo", file.getName(), requestFile);
+            Call<UploadPhotoRes> callPhoto = mDataManager.uploadPhoto(body);
+            callPhoto.enqueue(new retrofit2.Callback<UploadPhotoRes>() {
+                @Override
+                public void onResponse(Call<UploadPhotoRes> call,
+                                       Response<UploadPhotoRes> response) {
+                    if (response.code() == 200) {
+                        mDataManager.getPreferencesManager()
+                                .saveUserPhoto(Uri.parse(response.body().getData().getPhoto()));
+                        Log.v(TAG, "Upload photo success");
+                    } else {
+                        Log.e(TAG, "Upload photo error: " + response.errorBody());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<UploadPhotoRes> call, Throwable t) {
+                    Log.e(TAG, "Upload photo error: " + t.getMessage());
+                }
+            });
+            Call<UploadPhotoRes> callAvatar = mDataManager.uploadAvatar(body);
+            callAvatar.enqueue(new retrofit2.Callback<UploadPhotoRes>() {
+                @Override
+                public void onResponse(Call<UploadPhotoRes> call,
+                                       Response<UploadPhotoRes> response) {
+                    if (response.code() == 200) {
+                        mDataManager.getPreferencesManager()
+                                .saveUserAvatar(Uri.parse(response.body().getData().getPhoto()));
+                        Log.v(TAG, "Upload avatar success");
+                    } else {
+                        Log.e(TAG, "Upload avatar error: " + response.errorBody());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<UploadPhotoRes> call, Throwable t) {
+                    Log.e(TAG, "Upload avatar error: " + t.getMessage());
+                }
+            });
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            }, ConstantManager.UPLOAD_REQUEST_PERMISSION_CODE);
+            Snackbar.make(mCoordinatorLayout, "Для корректной работы приложения необходимо дать требуемые разрешения", Snackbar.LENGTH_LONG)
+                    .setAction("Разрешить", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            openApplicationSettings();
+                        }
+                    }).show();
+        }
     }
     //</editor-fold>
 
