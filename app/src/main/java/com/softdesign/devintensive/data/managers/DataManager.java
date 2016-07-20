@@ -80,7 +80,7 @@ public class DataManager {
         try {
             userList = mDaoSession.queryBuilder(User.class)
                     .where(UserDao.Properties.Rating.gt(0))
-                    .orderDesc(UserDao.Properties.Rating)
+                    .orderAsc(UserDao.Properties.ListPosition)
                     .list();
         } catch (Exception e) {
             e.printStackTrace();
@@ -95,7 +95,7 @@ public class DataManager {
         try {
             userList = mDaoSession.queryBuilder(User.class)
                     .where(UserDao.Properties.Rating.gt(0), UserDao.Properties.SearchName.like("%" + query.toUpperCase() + "%"))
-                    .orderDesc(UserDao.Properties.Rating)
+                    .orderAsc(UserDao.Properties.ListPosition)
                     .list();
         } catch (Exception e) {
             e.printStackTrace();

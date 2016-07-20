@@ -10,10 +10,10 @@ import com.softdesign.devintensive.data.storage.models.User;
 
 import java.util.List;
 
-public class ShowUserOperation extends ChronosOperation<List<User>> {
+public class ShowUsersOperation extends ChronosOperation<List<User>> {
     private String mQuery;
 
-    public ShowUserOperation(String query) {
+    public ShowUsersOperation(String query) {
         this.mQuery = query;
     }
 

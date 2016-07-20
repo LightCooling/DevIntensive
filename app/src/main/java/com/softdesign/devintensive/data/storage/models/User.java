@@ -4,7 +4,6 @@ import com.softdesign.devintensive.data.network.res.UserListRes;
 
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Id;
-import org.greenrobot.greendao.annotation.JoinEntity;
 import org.greenrobot.greendao.annotation.JoinProperty;
 import org.greenrobot.greendao.annotation.NotNull;
 import org.greenrobot.greendao.annotation.ToMany;
@@ -41,12 +40,14 @@ public class User {
 
     private String bio;
 
+    private int listPosition;
+
     @ToMany(joinProperties = {
             @JoinProperty(name = "remoteId", referencedName = "userRemoteId")
     })
     private List<Repository> repositories;
 
-    public User(UserListRes.Datum userRes) {
+    public User(UserListRes.UserData userRes) {
         remoteId = userRes.getId();
         photo = userRes.getPublicInfo().getPhoto();
         fullName = userRes.getFullName();
@@ -208,10 +209,18 @@ public class User {
         this.id = id;
     }
 
-    @Generated(hash = 1023608416)
-    public User(Long id, @NotNull String remoteId, String photo,
-            @NotNull String fullName, @NotNull String searchName, int rating,
-            int codeLines, int projects, String bio) {
+    public int getListPosition() {
+        return this.listPosition;
+    }
+
+    public void setListPosition(int listPosition) {
+        this.listPosition = listPosition;
+    }
+
+    @Generated(hash = 1259980600)
+    public User(Long id, @NotNull String remoteId, String photo, @NotNull String fullName,
+            @NotNull String searchName, int rating, int codeLines, int projects, String bio,
+            int listPosition) {
         this.id = id;
         this.remoteId = remoteId;
         this.photo = photo;
@@ -221,6 +230,7 @@ public class User {
         this.codeLines = codeLines;
         this.projects = projects;
         this.bio = bio;
+        this.listPosition = listPosition;
     }
 
     @Generated(hash = 586692638)

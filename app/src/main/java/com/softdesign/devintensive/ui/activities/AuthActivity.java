@@ -6,26 +6,20 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.res.ConfigurationHelper;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import com.softdesign.devintensive.R;
 import com.softdesign.devintensive.data.events.LoginEvent;
-import com.softdesign.devintensive.data.events.UserListSaveEvent;
 import com.softdesign.devintensive.data.managers.DataManager;
 import com.softdesign.devintensive.data.network.req.UserModelReq;
-import com.softdesign.devintensive.data.network.res.UserListRes;
 import com.softdesign.devintensive.data.network.res.UserModelRes;
-import com.softdesign.devintensive.data.storage.models.Repository;
 import com.softdesign.devintensive.data.storage.models.RepositoryDao;
-import com.softdesign.devintensive.data.storage.models.User;
 import com.softdesign.devintensive.data.storage.models.UserDao;
 import com.softdesign.devintensive.utils.NetworkStatusChecker;
 import com.squareup.otto.Subscribe;
@@ -61,13 +55,8 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
         Log.d("Devin", mDataManager.getPreferencesManager().getAuthToken());
         if (mDataManager.getPreferencesManager().getAuthToken() != null
                 && !mDataManager.getPreferencesManager().getAuthToken().isEmpty()) {
-            if (mUserDao.count() == 0) {
-                showProgress();
-                saveUsersListInDb();
-            } else {
-                startNextActivity(UserListActivity.class);
-                return;
-            }
+            startNextActivity(UserListActivity.class);
+            return;
         }
         setContentView(R.layout.activity_auth);
         mLogin = (EditText) findViewById(R.id.login_et);
@@ -107,6 +96,8 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
 
 
     private void loginSuccess(UserModelRes userModel) {
+        if (mLogin == null) Log.d(TAG, "mlogin is null");
+        if ((mLogin = (EditText) findViewById(R.id.login_et)) == null) Log.d(TAG, "fvbi is null");
         mDataManager.getPreferencesManager().saveLastEmail(mLogin.getText().toString());
         mDataManager.getPreferencesManager().saveAuthToken(userModel.getData().getToken());
         mDataManager.getPreferencesManager().saveUserId(userModel.getData().getUser().getId());
@@ -114,6 +105,8 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
         saveUserValues(userModel);
         saveUserFields(userModel);
         saveUserPhotos(userModel);
+
+        startNextActivity(UserListActivity.class);
     }
 
     private void rememberPassword() {
@@ -147,7 +140,6 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
         if (event.isSuccess()) {
             if (event.getResponseCode() == 200) {
                 loginSuccess(event.getResponse());
-                saveUsersListInDb();
             } else if (event.getResponseCode() == 404) {
                 hideProgress();
                 showMessage("Неверный логин или пароль");
@@ -156,40 +148,6 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
                 showMessage("Ohh, shit happened!");
             }
         } else {
-            Log.e(TAG, event.getError().toString());
-            showMessage("Невозможно подключиться к серверу");
-        }
-    }
-
-    @Subscribe
-    @SuppressWarnings("unused")
-    public void userListSaveComplete(UserListSaveEvent event) {
-        if (event.isSuccess()) {
-            try {
-                if (event.getResponseCode() == 200) {
-                    List<Repository> allRepositories = new ArrayList<>();
-                    List<User> allUsers = new ArrayList<>();
-
-                    for (UserListRes.Datum userRes : event.getResponse().getData()) {
-                        allRepositories.addAll(getRepoListFromUserRes(userRes));
-                        allUsers.add(new User(userRes));
-                    }
-
-                    mRepositoryDao.insertOrReplaceInTx(allRepositories);
-                    mUserDao.insertOrReplaceInTx(allUsers);
-                    startNextActivity(UserListActivity.class);
-                } else {
-                    hideProgress();
-                    Log.e(TAG, "onResponse: " + event.getResponseCode());
-                    showMessage("Ошибка при получении списка пользователей");
-                }
-            } catch (NullPointerException e) {
-                hideProgress();
-                Log.e(TAG, e.toString());
-                showMessage(e.toString());
-            }
-        } else {
-            hideProgress();
             Log.e(TAG, event.getError().toString());
             showMessage("Невозможно подключиться к серверу");
         }
@@ -226,32 +184,6 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
     private void saveUserPhotos(UserModelRes userModel) {
         mDataManager.getPreferencesManager().saveUserPhoto(Uri.parse(userModel.getData().getUser().getPublicInfo().getPhoto()));
         mDataManager.getPreferencesManager().saveUserAvatar(Uri.parse(userModel.getData().getUser().getPublicInfo().getAvatar()));
-    }
-
-    private void saveUsersListInDb() {
-        Call<UserListRes> call = mDataManager.getUserListFromNetwork();
-
-        call.enqueue(new Callback<UserListRes>() {
-            @Override
-            public void onResponse(Call<UserListRes> call, Response<UserListRes> response) {
-                mDataManager.getBus().post(new UserListSaveEvent(true, response.code(), response.body()));
-            }
-
-            @Override
-            public void onFailure(Call<UserListRes> call, Throwable t) {
-                mDataManager.getBus().post(new UserListSaveEvent(false, t));
-            }
-        });
-    }
-
-    private List<Repository> getRepoListFromUserRes(UserListRes.Datum userData) {
-        final String userId = userData.getId();
-
-        List<Repository> repositories = new ArrayList<>();
-        for (UserModelRes.Repo repositoryRes : userData.getRepositories().getRepo()) {
-            repositories.add(new Repository(repositoryRes, userId));
-        }
-        return repositories;
     }
 
     @Override

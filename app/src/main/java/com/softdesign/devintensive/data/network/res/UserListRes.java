@@ -12,13 +12,13 @@ public class UserListRes {
     public boolean success;
     @SerializedName("data")
     @Expose
-    public List<Datum> data = new ArrayList<Datum>();
+    public List<UserData> data = new ArrayList<UserData>();
 
-    public List<Datum> getData() {
+    public List<UserData> getData() {
         return data;
     }
 
-    public class Datum {
+    public class UserData {
 
         @SerializedName("_id")
         @Expose

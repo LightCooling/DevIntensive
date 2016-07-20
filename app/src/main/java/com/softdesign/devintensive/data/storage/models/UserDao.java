@@ -31,6 +31,7 @@ public class UserDao extends AbstractDao<User, Long> {
         public final static Property CodeLines = new Property(6, int.class, "codeLines", false, "CODE_LINES");
         public final static Property Projects = new Property(7, int.class, "projects", false, "PROJECTS");
         public final static Property Bio = new Property(8, String.class, "bio", false, "BIO");
+        public final static Property ListPosition = new Property(9, int.class, "listPosition", false, "LIST_POSITION");
     };
 
     private DaoSession daoSession;
@@ -57,7 +58,8 @@ public class UserDao extends AbstractDao<User, Long> {
                 "\"RATING\" INTEGER NOT NULL ," + // 5: rating
                 "\"CODE_LINES\" INTEGER NOT NULL ," + // 6: codeLines
                 "\"PROJECTS\" INTEGER NOT NULL ," + // 7: projects
-                "\"BIO\" TEXT);"); // 8: bio
+                "\"BIO\" TEXT," + // 8: bio
+                "\"LIST_POSITION\" INTEGER NOT NULL );"); // 9: listPosition
     }
 
     /** Drops the underlying database table. */
@@ -90,6 +92,7 @@ public class UserDao extends AbstractDao<User, Long> {
         if (bio != null) {
             stmt.bindString(9, bio);
         }
+        stmt.bindLong(10, entity.getListPosition());
     }
 
     @Override
@@ -116,6 +119,7 @@ public class UserDao extends AbstractDao<User, Long> {
         if (bio != null) {
             stmt.bindString(9, bio);
         }
+        stmt.bindLong(10, entity.getListPosition());
     }
 
     @Override
@@ -140,7 +144,8 @@ public class UserDao extends AbstractDao<User, Long> {
             cursor.getInt(offset + 5), // rating
             cursor.getInt(offset + 6), // codeLines
             cursor.getInt(offset + 7), // projects
-            cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8) // bio
+            cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8), // bio
+            cursor.getInt(offset + 9) // listPosition
         );
         return entity;
     }
@@ -156,6 +161,7 @@ public class UserDao extends AbstractDao<User, Long> {
         entity.setCodeLines(cursor.getInt(offset + 6));
         entity.setProjects(cursor.getInt(offset + 7));
         entity.setBio(cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8));
+        entity.setListPosition(cursor.getInt(offset + 9));
      }
     
     @Override
