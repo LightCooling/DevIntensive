@@ -58,6 +58,7 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
     static final String TAG = "UserListActivity";
     private static final String SHOW_USER_QUERY = "showUsersByQuery";
     private static final String SEARCH_QUERY = "SEARCH_QUERY";
+    private static final String REFRESH_STATUS = "REFRESH_STATUS";
 
     @BindView(R.id.navigation_view)
     NavigationView mNavigationView;
@@ -107,7 +108,12 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
                 runOperation(new ShowUsersOperation(null));
             } else {
                 mQuery = savedInstanceState.getString(SEARCH_QUERY);
-
+                final boolean refreshing = savedInstanceState.getBoolean(REFRESH_STATUS);
+                mSwipeRefreshLayout.post(new Runnable() {
+                    @Override public void run() {
+                        mSwipeRefreshLayout.setRefreshing(refreshing);
+                    }
+                });
                 if (mQuery != null && !mQuery.isEmpty())
                     runOperation(new ShowUsersOperation(mQuery));
                 else
@@ -121,6 +127,7 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
         super.onSaveInstanceState(outState);
         if (outState != null) {
             outState.putString(SEARCH_QUERY, mQuery);
+            outState.putBoolean(REFRESH_STATUS, mSwipeRefreshLayout.isRefreshing());
         }
     }
 
@@ -238,6 +245,7 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
             @Override
             public boolean onQueryTextChange(String s) {
                 if (s.isEmpty()) {
+                    mQuery = "";
                     showUsers(mDataManager.getUserListFromDb());
                 } else {
                     showUsersByQuery(s);

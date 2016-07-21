@@ -547,6 +547,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     if (response.code() == 200) {
                         mDataManager.getPreferencesManager()
                                 .saveUserPhoto(Uri.parse(response.body().getData().getPhoto()));
+                        insertProfileImage(Uri.parse(response.body().getData().getPhoto()));
                         Log.v(TAG, "Upload photo success");
                     } else {
                         Log.e(TAG, "Upload photo error: " + response.errorBody());
@@ -566,6 +567,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     if (response.code() == 200) {
                         mDataManager.getPreferencesManager()
                                 .saveUserAvatar(Uri.parse(response.body().getData().getPhoto()));
+                        insertAvatarImage(Uri.parse(response.body().getData().getPhoto()));
                         Log.v(TAG, "Upload avatar success");
                     } else {
                         Log.e(TAG, "Upload avatar error: " + response.errorBody());
