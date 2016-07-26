@@ -307,6 +307,21 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
                         runOperation(new SaveUsersOperation(allUsers, allRepositories,
                                 SaveUsersOperation.MODE_INSERT_REPLACE));
                     } else {
+                        for (User userDb : mDataManager.getUserListFromDb()) {
+                            for (User userNet : allUsers) {
+                                if (userNet.getRemoteId().equals(userDb.getRemoteId())) {
+                                    userDb.setPhoto(userNet.getPhoto());
+                                    userDb.setAvatar(userNet.getAvatar());
+                                    userDb.setRating(userNet.getRating());
+                                    userDb.setCodeLines(userNet.getCodeLines());
+                                    userDb.setProjects(userNet.getProjects());
+                                    userDb.setLikes(userNet.getLikes());
+                                    userDb.setLikesBy(userNet.getLikesBy());
+                                    userDb.setBio(userNet.getBio());
+                                    userDb.resetRepositories();
+                                }
+                            }
+                        }
                         runOperation(new SaveUsersOperation(allUsers, allRepositories,
                                 SaveUsersOperation.MODE_UPDATE));
                     }

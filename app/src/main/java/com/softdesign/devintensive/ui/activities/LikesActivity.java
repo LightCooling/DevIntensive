@@ -37,6 +37,7 @@ public class LikesActivity extends BaseActivity {
         ActionBar actionBar = getSupportActionBar();
 
         if (actionBar != null) {
+            actionBar.setTitle("Нравится");
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
     }

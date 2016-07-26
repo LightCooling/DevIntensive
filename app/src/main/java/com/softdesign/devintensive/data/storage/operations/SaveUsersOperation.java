@@ -45,7 +45,7 @@ public class SaveUsersOperation extends ChronosOperation<Void> {
                         .getUserDao().updateInTx(mUsers);
                 if (mRepositories != null) {
                     DataManager.getInstance().getDaoSession()
-                            .getRepositoryDao().updateInTx(mRepositories);
+                            .getRepositoryDao().insertOrReplaceInTx(mRepositories);
                 }
         }
         return null;
