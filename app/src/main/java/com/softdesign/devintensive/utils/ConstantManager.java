@@ -18,7 +18,7 @@ public interface ConstantManager {
     String USER_CODE_LINES_VALUE = "USER_CODE_LINES_VALUE";
     String USER_PROJECTS_VALUE = "USER_PROJECTS_VALUE";
 
-    String PARCELABLE_KEY = "PARCELABLE_KEY";
+    String REMOTE_ID = "REMOTE_ID";
 
     int LOAD_PROFILE_PHOTO = 1;
     int REQUEST_CAMERA_PICTURE = 101;

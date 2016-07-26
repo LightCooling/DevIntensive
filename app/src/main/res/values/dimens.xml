@@ -13,9 +13,12 @@
     <dimen name="spacing_larger_72">72dp</dimen>
 
     <!-- Sizes -->
-    <dimen name="size_small_24">24dp</dimen>
-    <dimen name="size_normal_32">32dp</dimen>
+    <dimen name="size_mini_24">24dp</dimen>
+    <dimen name="size_small_32">32dp</dimen>
+    <dimen name="size_normal_40">40dp</dimen>
+    <dimen name="size_medial_48">48dp</dimen>
     <dimen name="size_medium_56">56dp</dimen>
+    <dimen name="size_big_64">64dp</dimen>
     <dimen name="size_large_72">72dp</dimen>
 
     <!-- Font sizes -->
@@ -30,4 +33,6 @@
     <dimen name="profile_image_size">256dp</dimen>
 
     <dimen name="placeholder_photo_size">90dp</dimen>
+
+    <dimen name="fab">56dp</dimen>
 </resources>

@@ -6,6 +6,7 @@ import com.softdesign.devintensive.data.network.PicassoCache;
 import com.softdesign.devintensive.data.network.RestService;
 import com.softdesign.devintensive.data.network.ServiceGenerator;
 import com.softdesign.devintensive.data.network.req.UserModelReq;
+import com.softdesign.devintensive.data.network.res.UpdateLikeRes;
 import com.softdesign.devintensive.data.network.res.UploadPhotoRes;
 import com.softdesign.devintensive.data.network.res.UserListRes;
 import com.softdesign.devintensive.data.network.res.UserModelRes;
@@ -13,14 +14,14 @@ import com.softdesign.devintensive.data.storage.models.DaoSession;
 import com.softdesign.devintensive.data.storage.models.User;
 import com.softdesign.devintensive.data.storage.models.UserDao;
 import com.softdesign.devintensive.utils.DevIntensiveApplication;
-import com.squareup.otto.Bus;
 import com.squareup.picasso.Picasso;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.MultipartBody;
-import okhttp3.ResponseBody;
 import retrofit2.Call;
 
 public class DataManager {
@@ -31,7 +32,7 @@ public class DataManager {
     private RestService mRestService;
     private Picasso mPicasso;
     private DaoSession mDaoSession;
-    private Bus mBus;
+    private EventBus mBus;
 
     public DataManager() {
         this.mContext = DevIntensiveApplication.getContext();
@@ -39,7 +40,7 @@ public class DataManager {
         this.mRestService = ServiceGenerator.createService(RestService.class);
         this.mPicasso = new PicassoCache(mContext).getPicassoInstance();
         this.mDaoSession = DevIntensiveApplication.getDaoSession();
-        this.mBus = new Bus();
+        this.mBus = new EventBus();
     }
 
     public static DataManager getInstance() {
@@ -56,7 +57,7 @@ public class DataManager {
         return mPreferencesManager;
     }
 
-    public Bus getBus() {
+    public EventBus getBus() {
         return mBus;
     }
 
@@ -76,6 +77,14 @@ public class DataManager {
 
     public Call<UploadPhotoRes> uploadAvatar(MultipartBody.Part file) {
         return mRestService.uploadAvatar(getPreferencesManager().getUserId(), file);
+    }
+
+    public Call<UpdateLikeRes> likeUser(String userId) {
+        return mRestService.likeUser(userId);
+    }
+
+    public Call<UpdateLikeRes> unlikeUser(String userId) {
+        return mRestService.unlikeUser(userId);
     }
 
     //</editor-fold>
@@ -114,5 +123,12 @@ public class DataManager {
         return userList;
     }
 
+    public User getUser(String remoteId) {
+        return mDaoSession.getUserDao().queryBuilder().where(UserDao.Properties.RemoteId.eq(remoteId)).unique();
+    }
+
+    public List<User> getUsersByIds(List<String> remoteIds) {
+        return mDaoSession.getUserDao().queryBuilder().where(UserDao.Properties.RemoteId.in(remoteIds)).list();
+    }
     //</editor-fold>
 }

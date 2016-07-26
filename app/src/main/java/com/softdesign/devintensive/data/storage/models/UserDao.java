@@ -25,13 +25,16 @@ public class UserDao extends AbstractDao<User, Long> {
         public final static Property Id = new Property(0, Long.class, "id", true, "_id");
         public final static Property RemoteId = new Property(1, String.class, "remoteId", false, "REMOTE_ID");
         public final static Property Photo = new Property(2, String.class, "photo", false, "PHOTO");
-        public final static Property FullName = new Property(3, String.class, "fullName", false, "FULL_NAME");
-        public final static Property SearchName = new Property(4, String.class, "searchName", false, "SEARCH_NAME");
-        public final static Property Rating = new Property(5, int.class, "rating", false, "RATING");
-        public final static Property CodeLines = new Property(6, int.class, "codeLines", false, "CODE_LINES");
-        public final static Property Projects = new Property(7, int.class, "projects", false, "PROJECTS");
-        public final static Property Bio = new Property(8, String.class, "bio", false, "BIO");
-        public final static Property ListPosition = new Property(9, int.class, "listPosition", false, "LIST_POSITION");
+        public final static Property Avatar = new Property(3, String.class, "avatar", false, "AVATAR");
+        public final static Property FullName = new Property(4, String.class, "fullName", false, "FULL_NAME");
+        public final static Property SearchName = new Property(5, String.class, "searchName", false, "SEARCH_NAME");
+        public final static Property Rating = new Property(6, int.class, "rating", false, "RATING");
+        public final static Property CodeLines = new Property(7, int.class, "codeLines", false, "CODE_LINES");
+        public final static Property Projects = new Property(8, int.class, "projects", false, "PROJECTS");
+        public final static Property Likes = new Property(9, int.class, "likes", false, "LIKES");
+        public final static Property LikesBy = new Property(10, String.class, "likesBy", false, "LIKES_BY");
+        public final static Property Bio = new Property(11, String.class, "bio", false, "BIO");
+        public final static Property ListPosition = new Property(12, int.class, "listPosition", false, "LIST_POSITION");
     };
 
     private DaoSession daoSession;
@@ -53,13 +56,16 @@ public class UserDao extends AbstractDao<User, Long> {
                 "\"_id\" INTEGER PRIMARY KEY ," + // 0: id
                 "\"REMOTE_ID\" TEXT NOT NULL UNIQUE ," + // 1: remoteId
                 "\"PHOTO\" TEXT," + // 2: photo
-                "\"FULL_NAME\" TEXT NOT NULL UNIQUE ," + // 3: fullName
-                "\"SEARCH_NAME\" TEXT NOT NULL UNIQUE ," + // 4: searchName
-                "\"RATING\" INTEGER NOT NULL ," + // 5: rating
-                "\"CODE_LINES\" INTEGER NOT NULL ," + // 6: codeLines
-                "\"PROJECTS\" INTEGER NOT NULL ," + // 7: projects
-                "\"BIO\" TEXT," + // 8: bio
-                "\"LIST_POSITION\" INTEGER NOT NULL );"); // 9: listPosition
+                "\"AVATAR\" TEXT," + // 3: avatar
+                "\"FULL_NAME\" TEXT NOT NULL UNIQUE ," + // 4: fullName
+                "\"SEARCH_NAME\" TEXT NOT NULL UNIQUE ," + // 5: searchName
+                "\"RATING\" INTEGER NOT NULL ," + // 6: rating
+                "\"CODE_LINES\" INTEGER NOT NULL ," + // 7: codeLines
+                "\"PROJECTS\" INTEGER NOT NULL ," + // 8: projects
+                "\"LIKES\" INTEGER NOT NULL ," + // 9: likes
+                "\"LIKES_BY\" TEXT," + // 10: likesBy
+                "\"BIO\" TEXT," + // 11: bio
+                "\"LIST_POSITION\" INTEGER NOT NULL );"); // 12: listPosition
     }
 
     /** Drops the underlying database table. */
@@ -82,17 +88,28 @@ public class UserDao extends AbstractDao<User, Long> {
         if (photo != null) {
             stmt.bindString(3, photo);
         }
-        stmt.bindString(4, entity.getFullName());
-        stmt.bindString(5, entity.getSearchName());
-        stmt.bindLong(6, entity.getRating());
-        stmt.bindLong(7, entity.getCodeLines());
-        stmt.bindLong(8, entity.getProjects());
+ 
+        String avatar = entity.getAvatar();
+        if (avatar != null) {
+            stmt.bindString(4, avatar);
+        }
+        stmt.bindString(5, entity.getFullName());
+        stmt.bindString(6, entity.getSearchName());
+        stmt.bindLong(7, entity.getRating());
+        stmt.bindLong(8, entity.getCodeLines());
+        stmt.bindLong(9, entity.getProjects());
+        stmt.bindLong(10, entity.getLikes());
+ 
+        String likesBy = entity.getLikesBy();
+        if (likesBy != null) {
+            stmt.bindString(11, likesBy);
+        }
  
         String bio = entity.getBio();
         if (bio != null) {
-            stmt.bindString(9, bio);
+            stmt.bindString(12, bio);
         }
-        stmt.bindLong(10, entity.getListPosition());
+        stmt.bindLong(13, entity.getListPosition());
     }
 
     @Override
@@ -109,17 +126,28 @@ public class UserDao extends AbstractDao<User, Long> {
         if (photo != null) {
             stmt.bindString(3, photo);
         }
-        stmt.bindString(4, entity.getFullName());
-        stmt.bindString(5, entity.getSearchName());
-        stmt.bindLong(6, entity.getRating());
-        stmt.bindLong(7, entity.getCodeLines());
-        stmt.bindLong(8, entity.getProjects());
+ 
+        String avatar = entity.getAvatar();
+        if (avatar != null) {
+            stmt.bindString(4, avatar);
+        }
+        stmt.bindString(5, entity.getFullName());
+        stmt.bindString(6, entity.getSearchName());
+        stmt.bindLong(7, entity.getRating());
+        stmt.bindLong(8, entity.getCodeLines());
+        stmt.bindLong(9, entity.getProjects());
+        stmt.bindLong(10, entity.getLikes());
+ 
+        String likesBy = entity.getLikesBy();
+        if (likesBy != null) {
+            stmt.bindString(11, likesBy);
+        }
  
         String bio = entity.getBio();
         if (bio != null) {
-            stmt.bindString(9, bio);
+            stmt.bindString(12, bio);
         }
-        stmt.bindLong(10, entity.getListPosition());
+        stmt.bindLong(13, entity.getListPosition());
     }
 
     @Override
@@ -139,13 +167,16 @@ public class UserDao extends AbstractDao<User, Long> {
             cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0), // id
             cursor.getString(offset + 1), // remoteId
             cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // photo
-            cursor.getString(offset + 3), // fullName
-            cursor.getString(offset + 4), // searchName
-            cursor.getInt(offset + 5), // rating
-            cursor.getInt(offset + 6), // codeLines
-            cursor.getInt(offset + 7), // projects
-            cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8), // bio
-            cursor.getInt(offset + 9) // listPosition
+            cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // avatar
+            cursor.getString(offset + 4), // fullName
+            cursor.getString(offset + 5), // searchName
+            cursor.getInt(offset + 6), // rating
+            cursor.getInt(offset + 7), // codeLines
+            cursor.getInt(offset + 8), // projects
+            cursor.getInt(offset + 9), // likes
+            cursor.isNull(offset + 10) ? null : cursor.getString(offset + 10), // likesBy
+            cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11), // bio
+            cursor.getInt(offset + 12) // listPosition
         );
         return entity;
     }
@@ -155,13 +186,16 @@ public class UserDao extends AbstractDao<User, Long> {
         entity.setId(cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0));
         entity.setRemoteId(cursor.getString(offset + 1));
         entity.setPhoto(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
-        entity.setFullName(cursor.getString(offset + 3));
-        entity.setSearchName(cursor.getString(offset + 4));
-        entity.setRating(cursor.getInt(offset + 5));
-        entity.setCodeLines(cursor.getInt(offset + 6));
-        entity.setProjects(cursor.getInt(offset + 7));
-        entity.setBio(cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8));
-        entity.setListPosition(cursor.getInt(offset + 9));
+        entity.setAvatar(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
+        entity.setFullName(cursor.getString(offset + 4));
+        entity.setSearchName(cursor.getString(offset + 5));
+        entity.setRating(cursor.getInt(offset + 6));
+        entity.setCodeLines(cursor.getInt(offset + 7));
+        entity.setProjects(cursor.getInt(offset + 8));
+        entity.setLikes(cursor.getInt(offset + 9));
+        entity.setLikesBy(cursor.isNull(offset + 10) ? null : cursor.getString(offset + 10));
+        entity.setBio(cursor.isNull(offset + 11) ? null : cursor.getString(offset + 11));
+        entity.setListPosition(cursor.getInt(offset + 12));
      }
     
     @Override

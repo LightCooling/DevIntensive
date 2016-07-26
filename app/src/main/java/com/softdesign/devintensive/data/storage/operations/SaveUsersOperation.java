@@ -6,69 +6,50 @@ import android.support.annotation.Nullable;
 import com.redmadrobot.chronos.ChronosOperation;
 import com.redmadrobot.chronos.ChronosOperationResult;
 import com.softdesign.devintensive.data.managers.DataManager;
-import com.softdesign.devintensive.data.network.res.UserListRes;
-import com.softdesign.devintensive.data.network.res.UserModelRes;
 import com.softdesign.devintensive.data.storage.models.Repository;
 import com.softdesign.devintensive.data.storage.models.User;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class SaveUsersOperation extends ChronosOperation<Void> {
-    private List<UserListRes.UserData> mUserData;
+    public static final int MODE_INSERT_REPLACE = 111222333;
+    public static final int MODE_UPDATE = 444555666;
+    private List<User> mUsers;
+    private List<Repository> mRepositories;
+    private int mMode;
 
-    public SaveUsersOperation(List<UserListRes.UserData> userData) {
-        mUserData = userData;
+    public SaveUsersOperation(List<User> users, List<Repository> repositories, int mode) {
+        mUsers = users;
+        mRepositories = repositories;
+        mMode = mode;
+    }
+
+    public SaveUsersOperation(List<User> users, int mode) {
+        this(users, null, mode);
     }
 
     @Nullable
     @Override
     public Void run() {
-        List<Repository> allRepositories = new ArrayList<>();
-        List<User> allUsers = new ArrayList<>();
-
-        // create storage objects from network data
-        for (UserListRes.UserData userRes : mUserData) {
-            allRepositories.addAll(getRepoListFromUserRes(userRes));
-            allUsers.add(new User(userRes));
-        }
-
-        // set list positions in order by rating
-        Collections.sort(allUsers, new Comparator<User>() {
-            @Override
-            public int compare(User user, User t1) {
-                if (user.getRating() > t1.getRating()) {
-                    return -1;
-                } else if (user.getRating() < t1.getRating()) {
-                    return 1;
+        switch (mMode) {
+            case MODE_INSERT_REPLACE:
+                DataManager.getInstance().getDaoSession()
+                        .getUserDao().insertOrReplaceInTx(mUsers);
+                if (mRepositories != null) {
+                    DataManager.getInstance().getDaoSession()
+                            .getRepositoryDao().insertOrReplaceInTx(mRepositories);
                 }
-                return 0;
-            }
-        });
-        for (int i = 0; i < allUsers.size(); i++) {
-            allUsers.get(i).setListPosition(i);
+                break;
+            case MODE_UPDATE:
+                DataManager.getInstance().getDaoSession()
+                        .getUserDao().updateInTx(mUsers);
+                if (mRepositories != null) {
+                    DataManager.getInstance().getDaoSession()
+                            .getRepositoryDao().updateInTx(mRepositories);
+                }
         }
-
-        // write all result data to db
-        DataManager.getInstance().getDaoSession()
-                .getRepositoryDao().insertOrReplaceInTx(allRepositories);
-        DataManager.getInstance().getDaoSession()
-                .getUserDao().insertOrReplaceInTx(allUsers);
         return null;
     }
-
-    private List<Repository> getRepoListFromUserRes(UserListRes.UserData userData) {
-        final String userId = userData.getId();
-
-        List<Repository> repositories = new ArrayList<>();
-        for (UserModelRes.Repo repositoryRes : userData.getRepositories().getRepo()) {
-            repositories.add(new Repository(repositoryRes, userId));
-        }
-        return repositories;
-    }
-
 
     @NonNull
     @Override

@@ -158,6 +158,12 @@ public class UserModelRes {
         @SerializedName("rait")
         @Expose
         private int rait;
+        @SerializedName("rating")
+        @Expose
+        private int rating;
+        @SerializedName("likesBy")
+        @Expose
+        private List<String> likesBy = new ArrayList<String>();
         @SerializedName("updated")
         @Expose
         private String updated;
@@ -170,8 +176,16 @@ public class UserModelRes {
             return linesCode;
         }
 
-        public int getRaiting() {
+        public int getRating() {
             return rait;
+        }
+
+        public int getLikes() {
+            return rating - rait;
+        }
+
+        public List<String> getLikesBy() {
+            return likesBy;
         }
     }
 

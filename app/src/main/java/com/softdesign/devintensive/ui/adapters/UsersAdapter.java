@@ -1,25 +1,27 @@
 package com.softdesign.devintensive.ui.adapters;
 
 import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.util.SparseArray;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.redmadrobot.chronos.ChronosConnector;
 import com.softdesign.devintensive.R;
 import com.softdesign.devintensive.data.events.RemoveUserEvent;
 import com.softdesign.devintensive.data.events.UpdateUsersEvent;
 import com.softdesign.devintensive.data.managers.DataManager;
 import com.softdesign.devintensive.data.storage.models.User;
-import com.softdesign.devintensive.data.storage.operations.RemoveUserOperation;
-import com.softdesign.devintensive.data.storage.operations.UpdateUsersOperation;
 import com.softdesign.devintensive.ui.views.AspectRatioImageView;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.NetworkPolicy;
@@ -37,7 +39,6 @@ import butterknife.OnClick;
 public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> {
     private static final String TAG = "UsersAdapter";
 
-    ChronosConnector mChronosConnector;
     Context mContext;
     List<User> mUsers;
     Queue<User> pendingRemoval;
@@ -45,9 +46,9 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
     CoordinatorLayout mCoordinatorLayout;
     ViewHolder.CustomClickListener mListener;
 
-    public UsersAdapter(List<User> users, CoordinatorLayout coordinatorLayout,
+    public UsersAdapter(Context context, List<User> users, CoordinatorLayout coordinatorLayout,
                         ViewHolder.CustomClickListener customClickListener) {
-        mChronosConnector = new ChronosConnector();
+        mContext = context;
         mUsers = users;
         pendingRemoval = new ArrayDeque<>();
         pendingRemovalPosition = new ArrayDeque<>();
@@ -57,7 +58,6 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 
     @Override
     public UsersAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        mContext = parent.getContext();
         View contentView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_user_list, parent, false);
         return new ViewHolder(contentView, mListener);
     }
@@ -99,11 +99,56 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
         holder.mCodeLine.setText(String.valueOf(user.getCodeLines()));
         holder.mProjects.setText(String.valueOf(user.getProjects()));
 
+        if (user.getLikes() == 0) {
+            holder.mLikeBtn.setText("");
+        } else {
+            holder.mLikeBtn.setText(String.valueOf(user.getLikes()));
+        }
+        Resources r = mContext.getResources();
+        Drawable src = r.getDrawable(R.drawable.ic_like);
+        Drawable colorized = src.getConstantState().newDrawable();
+        holder.mLiked = user.getLikesBy()
+                .contains(DataManager.getInstance().getPreferencesManager().getUserId());
+        if (holder.mLiked) {
+            colorized.mutate().setColorFilter(r.getColor(R.color.like), PorterDuff.Mode.SRC_ATOP);
+        } else {
+            colorized.mutate().setColorFilter(r.getColor(R.color.grey), PorterDuff.Mode.SRC_ATOP);
+        }
+        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24, r.getDisplayMetrics());
+        colorized.setBounds( 0, 0, px, px);
+        holder.mLikeBtn.setCompoundDrawables(colorized, null, null, null);
+
         if (user.getBio() == null || user.getBio().isEmpty()) {
             holder.mBio.setVisibility(View.GONE);
         } else {
             holder.mBio.setVisibility(View.VISIBLE);
             holder.mBio.setText(user.getBio());
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, int position, List<Object> payloads) {
+        if (!payloads.isEmpty()) {
+            List<String> likesBy = (List<String>) payloads.get(0);
+            if (likesBy.size() == 0) {
+                holder.mLikeBtn.setText("");
+            } else {
+                holder.mLikeBtn.setText(String.valueOf(likesBy.size()));
+            }
+            Resources r = mContext.getResources();
+            Drawable src = r.getDrawable(R.drawable.ic_like);
+            Drawable colorized = src.getConstantState().newDrawable();
+            holder.mLiked = likesBy.contains(DataManager.getInstance().getPreferencesManager().getUserId());
+            if (holder.mLiked) {
+                colorized.mutate().setColorFilter(r.getColor(R.color.like), PorterDuff.Mode.SRC_ATOP);
+            } else {
+                colorized.mutate().setColorFilter(r.getColor(R.color.grey), PorterDuff.Mode.SRC_ATOP);
+            }
+            int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24, r.getDisplayMetrics());
+            colorized.setBounds( 0, 0, px, px);
+            holder.mLikeBtn.setCompoundDrawables(colorized, null, null, null);
+        } else {
+            onBindViewHolder(holder, position);
         }
     }
 
@@ -114,7 +159,6 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
 
     public void moveItem(int fromPosition, int toPosition) {
         Log.d(TAG, "from " + fromPosition + " to " + toPosition);
-        User itemToMove = mUsers.get(fromPosition);
         if (fromPosition < toPosition) {
             for (int i = fromPosition; i < toPosition; i++) {
                 mUsers.get(i).setListPosition(i+1);
@@ -174,8 +218,12 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
         TextView mProjects;
         @BindView(R.id.bio_txt)
         TextView mBio;
+        @BindView(R.id.like_btn)
+        Button mLikeBtn;
         @BindDrawable(R.drawable.user_bg)
         Drawable mDummy;
+
+        boolean mLiked;
 
         private CustomClickListener mListener;
 
@@ -186,17 +234,27 @@ public class UsersAdapter extends RecyclerView.Adapter<UsersAdapter.ViewHolder> 
         }
 
         @Override
-        @OnClick(R.id.more_info_btn)
+        @OnClick({R.id.more_info_btn, R.id.like_btn})
         public void onClick(View view) {
-            if (mListener != null) {
-                mListener.onUserItemClickListener(getAdapterPosition());
+            switch (view.getId()) {
+                case R.id.more_info_btn:
+                    if (mListener != null) {
+                        mListener.onUserItemClick(getAdapterPosition());
+                    }
+                    break;
+                case R.id.like_btn:
+                    if (mListener != null) {
+                        mListener.onLike(getAdapterPosition(), !mLiked);
+                    }
+                    break;
             }
         }
 
         public interface CustomClickListener {
 
-            void onUserItemClickListener(int position);
+            void onUserItemClick(int position);
 
+            void onLike(int position, boolean liked);
         }
     }
 }

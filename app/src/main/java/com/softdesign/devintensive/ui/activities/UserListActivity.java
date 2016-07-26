@@ -31,20 +31,29 @@ import android.widget.TextView;
 
 import com.softdesign.devintensive.R;
 import com.softdesign.devintensive.data.events.RemoveUserEvent;
+import com.softdesign.devintensive.data.events.UpdateLikeEvent;
 import com.softdesign.devintensive.data.events.UpdateUsersEvent;
 import com.softdesign.devintensive.data.managers.DataManager;
+import com.softdesign.devintensive.data.network.res.UpdateLikeRes;
 import com.softdesign.devintensive.data.network.res.UserListRes;
+import com.softdesign.devintensive.data.network.res.UserModelRes;
+import com.softdesign.devintensive.data.storage.models.Repository;
 import com.softdesign.devintensive.data.storage.models.User;
-import com.softdesign.devintensive.data.storage.models.UserDTO;
 import com.softdesign.devintensive.data.storage.operations.RemoveUserOperation;
 import com.softdesign.devintensive.data.storage.operations.SaveUsersOperation;
 import com.softdesign.devintensive.data.storage.operations.ShowUsersOperation;
-import com.softdesign.devintensive.data.storage.operations.UpdateUsersOperation;
+import com.softdesign.devintensive.data.storage.operations.UpdateLikeOperation;
 import com.softdesign.devintensive.ui.adapters.UsersAdapter;
 import com.softdesign.devintensive.utils.ConstantManager;
-import com.squareup.otto.Subscribe;
+import com.softdesign.devintensive.utils.StringUtils;
 import com.squareup.picasso.Picasso;
 
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import butterknife.BindView;
@@ -102,10 +111,11 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
         insertAvatarImage(mDataManager.getPreferencesManager().loadUserAvatar());
         showProgress();
         if (mDataManager.getDaoSession().getUserDao().count() == 0) {
-            saveUsersListInDb();
+            saveUsersListInDb(true);
         } else {
             if (savedInstanceState == null) {
                 runOperation(new ShowUsersOperation(null));
+                saveUsersListInDb(false);
             } else {
                 mQuery = savedInstanceState.getString(SEARCH_QUERY);
                 final boolean refreshing = savedInstanceState.getBoolean(REFRESH_STATUS);
@@ -261,14 +271,45 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
         return super.onPrepareOptionsMenu(menu);
     }
 
-    private void saveUsersListInDb() {
+    private void saveUsersListInDb(final boolean reset) {
         Call<UserListRes> call = mDataManager.getUserListFromNetwork();
 
         call.enqueue(new Callback<UserListRes>() {
             @Override
             public void onResponse(Call<UserListRes> call, Response<UserListRes> response) {
                 if (response.code() == 200) {
-                    runOperation(new SaveUsersOperation(response.body().getData()));
+
+                    List<Repository> allRepositories = new ArrayList<>();
+                    List<User> allUsers = new ArrayList<>();
+
+                    // create storage objects from network data
+                    for (UserListRes.UserData userRes : response.body().getData()) {
+                        allRepositories.addAll(getRepoListFromUserRes(userRes));
+                        allUsers.add(new User(userRes));
+                    }
+
+                    if (reset) {
+                        // set list positions in order by rating
+                        Collections.sort(allUsers, new Comparator<User>() {
+                            @Override
+                            public int compare(User user, User t1) {
+                                if (user.getRating() > t1.getRating()) {
+                                    return -1;
+                                } else if (user.getRating() < t1.getRating()) {
+                                    return 1;
+                                }
+                                return 0;
+                            }
+                        });
+                        for (int i = 0; i < allUsers.size(); i++) {
+                            allUsers.get(i).setListPosition(i);
+                        }
+                        runOperation(new SaveUsersOperation(allUsers, allRepositories,
+                                SaveUsersOperation.MODE_INSERT_REPLACE));
+                    } else {
+                        runOperation(new SaveUsersOperation(allUsers, allRepositories,
+                                SaveUsersOperation.MODE_UPDATE));
+                    }
                 } else {
                     hideProgress();
                     Log.e(TAG, "onResponse: " + response.code());
@@ -286,16 +327,30 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
         });
     }
 
+    private List<Repository> getRepoListFromUserRes(UserListRes.UserData userData) {
+        final String userId = userData.getId();
+
+        List<Repository> repositories = new ArrayList<>();
+        for (UserModelRes.Repo repositoryRes : userData.getRepositories().getRepo()) {
+            repositories.add(new Repository(repositoryRes, userId));
+        }
+        return repositories;
+    }
+
     private void showUsers(List<User> users) {
         mUsers = users;
-        mUsersAdapter = new UsersAdapter(mUsers, mCoordinatorLayout, new UsersAdapter.ViewHolder.CustomClickListener() {
+        mUsersAdapter = new UsersAdapter(this, mUsers, mCoordinatorLayout,
+                new UsersAdapter.ViewHolder.CustomClickListener() {
             @Override
-            public void onUserItemClickListener(int position) {
-                UserDTO userDTO = new UserDTO(mUsers.get(position));
-
+            public void onUserItemClick(int position) {
                 Intent profileIntent = new Intent(UserListActivity.this, ProfileUserActivity.class);
-                profileIntent.putExtra(ConstantManager.PARCELABLE_KEY, userDTO);
+                profileIntent.putExtra(ConstantManager.REMOTE_ID, mUsers.get(position).getRemoteId());
                 startActivity(profileIntent);
+            }
+
+            @Override
+            public void onLike(int position, boolean liked) {
+                doLike(position, liked);
             }
         });
         mRecyclerView.swapAdapter(mUsersAdapter, false);
@@ -336,13 +391,14 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
         } else {
             showMessage("Невозможно сохранить список пользователей в базу данных");
             Log.e(TAG, result.getErrorMessage());
+            result.getException().printStackTrace();
         }
     }
 
     @Subscribe
     @SuppressWarnings("unused")
     public void updateUsers(UpdateUsersEvent event) {
-        runOperation(new UpdateUsersOperation(event.getUsersToUpdate()));
+        runOperation(new SaveUsersOperation(event.getUsersToUpdate(), SaveUsersOperation.MODE_UPDATE));
     }
 
     @Subscribe
@@ -353,6 +409,43 @@ public class UserListActivity extends BaseActivity implements SwipeRefreshLayout
 
     @Override
     public void onRefresh() {
-        saveUsersListInDb();
+        saveUsersListInDb(true);
+    }
+
+    private void doLike(final int position, boolean liked) {
+        Call<UpdateLikeRes> call;
+        if (liked) {
+            call = DataManager.getInstance().likeUser(mUsers.get(position).getRemoteId());
+        } else {
+            call = DataManager.getInstance().unlikeUser(mUsers.get(position).getRemoteId());
+        }
+        call.enqueue(new Callback<UpdateLikeRes>() {
+            @Override
+            public void onResponse(Call<UpdateLikeRes> call, Response<UpdateLikeRes> response) {
+                if (response.code() == 200) {
+                    runOperation(new UpdateLikeOperation(position,
+                            mUsers.get(position).getRemoteId(), response.body().getProfileValues()));
+                } else {
+                    showMessage("Не удалось анлайкнуть (" + response.code() + ")");
+                    Log.d(TAG, "onResponse: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<UpdateLikeRes> call, Throwable t) {
+                showMessage("Не удалось анлайкнуть");
+            }
+        });
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    @SuppressWarnings("unused")
+    public void updateLike(UpdateLikeEvent event) {
+        if (event.getPosition() != -1) {
+            mUsers.get(event.getPosition()).setLikesBy(StringUtils.listToStr(event.getLikesBy()));
+            mUsersAdapter.notifyItemChanged(event.getPosition(), event.getLikesBy());
+        } else {
+            mUsersAdapter.notifyDataSetChanged();
+        }
     }
 }

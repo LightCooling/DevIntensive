@@ -1,6 +1,10 @@
 package com.softdesign.devintensive.data.storage.models;
 
+import android.text.TextUtils;
+
+import com.facebook.stetho.common.StringUtil;
 import com.softdesign.devintensive.data.network.res.UserListRes;
+import com.softdesign.devintensive.utils.StringUtils;
 
 import org.greenrobot.greendao.annotation.Entity;
 import org.greenrobot.greendao.annotation.Id;
@@ -10,6 +14,8 @@ import org.greenrobot.greendao.annotation.ToMany;
 import org.greenrobot.greendao.annotation.Unique;
 
 import java.util.List;
+import java.util.StringJoiner;
+
 import org.greenrobot.greendao.annotation.Generated;
 import org.greenrobot.greendao.DaoException;
 
@@ -23,6 +29,8 @@ public class User {
     private String remoteId;
 
     private String photo;
+
+    private String avatar;
 
     @NotNull
     @Unique
@@ -38,6 +46,10 @@ public class User {
 
     private int projects;
 
+    private int likes;
+
+    private String likesBy;
+
     private String bio;
 
     private int listPosition;
@@ -49,12 +61,15 @@ public class User {
 
     public User(UserListRes.UserData userRes) {
         remoteId = userRes.getId();
+        avatar = userRes.getPublicInfo().getAvatar();
         photo = userRes.getPublicInfo().getPhoto();
         fullName = userRes.getFullName();
         searchName = userRes.getFullName().toUpperCase();
-        rating = userRes.getProfileValues().getRaiting();
+        rating = userRes.getProfileValues().getRating();
         codeLines = userRes.getProfileValues().getLinesCode();
         projects = userRes.getProfileValues().getProjects();
+        likes = userRes.getProfileValues().getLikes();
+        likesBy = StringUtils.listToStr(userRes.getProfileValues().getLikesBy());
         bio = userRes.getPublicInfo().getBio();
     }
 
@@ -217,18 +232,45 @@ public class User {
         this.listPosition = listPosition;
     }
 
-    @Generated(hash = 1259980600)
-    public User(Long id, @NotNull String remoteId, String photo, @NotNull String fullName,
-            @NotNull String searchName, int rating, int codeLines, int projects, String bio,
-            int listPosition) {
+    public String getLikesBy() {
+        return this.likesBy;
+    }
+
+    public void setLikesBy(String likesBy) {
+        this.likesBy = likesBy;
+    }
+
+    public int getLikes() {
+        return this.likes;
+    }
+
+    public void setLikes(int likes) {
+        this.likes = likes;
+    }
+
+    public String getAvatar() {
+        return this.avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+    @Generated(hash = 672763256)
+    public User(Long id, @NotNull String remoteId, String photo, String avatar,
+            @NotNull String fullName, @NotNull String searchName, int rating, int codeLines,
+            int projects, int likes, String likesBy, String bio, int listPosition) {
         this.id = id;
         this.remoteId = remoteId;
         this.photo = photo;
+        this.avatar = avatar;
         this.fullName = fullName;
         this.searchName = searchName;
         this.rating = rating;
         this.codeLines = codeLines;
         this.projects = projects;
+        this.likes = likes;
+        this.likesBy = likesBy;
         this.bio = bio;
         this.listPosition = listPosition;
     }

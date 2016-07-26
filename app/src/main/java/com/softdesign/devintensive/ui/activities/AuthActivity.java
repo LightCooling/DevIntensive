@@ -12,7 +12,6 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -21,10 +20,9 @@ import com.softdesign.devintensive.data.events.LoginEvent;
 import com.softdesign.devintensive.data.managers.DataManager;
 import com.softdesign.devintensive.data.network.req.UserModelReq;
 import com.softdesign.devintensive.data.network.res.UserModelRes;
-import com.softdesign.devintensive.data.storage.models.RepositoryDao;
-import com.softdesign.devintensive.data.storage.models.UserDao;
 import com.softdesign.devintensive.utils.NetworkStatusChecker;
-import com.squareup.otto.Subscribe;
+
+import org.greenrobot.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -154,7 +152,7 @@ public class AuthActivity extends BaseActivity implements View.OnClickListener, 
 
     private void saveUserValues(UserModelRes userModel) {
         int[] userValues = {
-                userModel.getData().getUser().getProfileValues().getRaiting(),
+                userModel.getData().getUser().getProfileValues().getRating(),
                 userModel.getData().getUser().getProfileValues().getLinesCode(),
                 userModel.getData().getUser().getProfileValues().getProjects()
         };
