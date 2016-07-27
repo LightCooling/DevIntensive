@@ -2,6 +2,7 @@
 <android.support.v4.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="com.softdesign.devintensive.ui.behaviors.CustomNestedScrollBehavior">
@@ -10,6 +11,38 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="@dimen/size_medial_48">
+
+            <ImageView
+                style="@style/icon_left"
+                android:layout_centerVertical="true"
+                android:layout_marginTop="0dp"
+                android:src="@drawable/ic_like"/>
+
+            <TextView
+                android:id="@+id/likes_txt"
+                style="@style/txt_value"
+                android:layout_centerVertical="true"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing_normal_16"
+                android:layout_marginLeft="@dimen/spacing_large_56"
+                android:layout_marginRight="@dimen/spacing_large_56"
+                android:text="25 likes"/>
+
+            <ImageView
+                android:id="@+id/likes_action"
+                style="@style/icon_right"
+                android:layout_centerVertical="true"
+                android:layout_marginTop="0dp"
+                android:src="@drawable/ic_visibility"/>
+        </RelativeLayout>
+
+        <View style="@style/separator"/>
 
         <!-- Github repository -->
         <RelativeLayout
@@ -38,7 +71,7 @@
                 android:src="@drawable/ic_account"/>
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginBottom="@dimen/spacing_normal_16"
@@ -47,7 +80,7 @@
                 android:orientation="vertical">
 
                 <TextView
-                    style="@style/txt_hint"
+                    style="@style/txt_title"
                     android:text="@string/profile.about.hint"/>
 
                 <TextView

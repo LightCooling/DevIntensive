@@ -2,9 +2,11 @@ package com.softdesign.devintensive.ui.activities;
 
 import android.app.Dialog;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -13,12 +15,13 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
@@ -33,14 +36,16 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.softdesign.devintensive.R;
 import com.softdesign.devintensive.data.managers.DataManager;
+import com.softdesign.devintensive.data.network.res.UploadPhotoRes;
+import com.softdesign.devintensive.ui.views.RegExValidateWatcher;
 import com.softdesign.devintensive.utils.ConstantManager;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
@@ -52,28 +57,56 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class MainActivity extends BaseActivity implements View.OnClickListener{
+import butterknife.BindView;
+import butterknife.BindViews;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import retrofit2.Call;
+import retrofit2.Response;
+
+public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
+    private static final String EDIT_MODE_KEY = "EDIT_MODE_KEY";
+    private static final int MODE_READ_ONLY = 0;
+    private static final int MODE_EDIT = 1;
 
     private DataManager mDataManager;
-    private int mCurrentEditMode = 0;
+    private int mCurrentEditMode = MODE_READ_ONLY;
 
-    private NavigationView mNavigationView;
-    private CoordinatorLayout mCoordinatorLayout;
-    private Toolbar mToolbar;
-    private DrawerLayout mNavigationDrawer;
-    private AppBarLayout mAppBarLayout;
-    private FloatingActionButton mFab;
-    private RelativeLayout mProfilePlaceholder;
-    private CollapsingToolbarLayout mCollapsingToolbarLayout;
-    private ImageView mProfileImage;
+    @BindView(R.id.navigation_view)
+    NavigationView mNavigationView;
+    @BindView(R.id.coordinator_layout)
+    CoordinatorLayout mCoordinatorLayout;
+    @BindView(R.id.toolbar)
+    Toolbar mToolbar;
+    @BindView(R.id.navigation_drawer)
+    DrawerLayout mNavigationDrawer;
+    @BindView(R.id.appbar_layout)
+    AppBarLayout mAppBarLayout;
+    @BindView(R.id.profile_placeholder)
+    RelativeLayout mProfilePlaceholder;
+    @BindView(R.id.collapsing_toolbar)
+    CollapsingToolbarLayout mCollapsingToolbarLayout;
+    @BindView(R.id.user_photo_img)
+    ImageView mProfileImage;
 
-    private EditText mUserPhone, mUserEmail, mUserVk, mUserGithub, mUserAbout;
-    private List<EditText> mUserInfoViews;
+    @BindView(R.id.phone_et)
+    EditText mUserPhone;
+    @BindView(R.id.email_et)
+    EditText mUserEmail;
+    @BindView(R.id.vk_et)
+    EditText mUserVk;
+    @BindView(R.id.github_et)
+    EditText mUserGithub;
+    @BindViews({R.id.phone_et, R.id.email_et, R.id.vk_et, R.id.github_et, R.id.about_et})
+    List<EditText> mUserInfoViews;
 
-    private TextView mUserValueRating, mUserValueCodeLines, mUserValueProjects;
-    private List<TextView> mUserValueViews;
+    @BindViews({R.id.stats_rating, R.id.stats_lines, R.id.stats_projects})
+    List<TextView> mUserValueViews;
 
     private AppBarLayout.LayoutParams mAppBarParams;
     private File mPhotoFile = null;
@@ -85,46 +118,39 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mDataManager = DataManager.getInstance();
-        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);
-        mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        mNavigationDrawer = (DrawerLayout) findViewById(R.id.navigation_drawer);
-        mAppBarLayout = (AppBarLayout) findViewById(R.id.appbar_layout);
-        mFab = (FloatingActionButton) findViewById(R.id.fab);
-        mProfilePlaceholder = (RelativeLayout) findViewById(R.id.profile_placeholder);
-        mCollapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-        mProfileImage = (ImageView) findViewById(R.id.user_photo_img);
+        ButterKnife.bind(this);
 
-        mUserPhone = (EditText) findViewById(R.id.phone_et);
-        mUserEmail = (EditText) findViewById(R.id.email_et);
-        mUserVk = (EditText) findViewById(R.id.vk_et);
-        mUserGithub = (EditText) findViewById(R.id.github_et);
-        mUserAbout = (EditText) findViewById(R.id.about_et);
-        mUserInfoViews = new ArrayList<>();
-        mUserInfoViews.add(mUserPhone);
-        mUserInfoViews.add(mUserEmail);
-        mUserInfoViews.add(mUserVk);
-        mUserInfoViews.add(mUserGithub);
-        mUserInfoViews.add(mUserAbout);
-
-        mUserValueRating = (TextView) findViewById(R.id.stats_rating);
-        mUserValueCodeLines = (TextView) findViewById(R.id.stats_lines);
-        mUserValueProjects = (TextView) findViewById(R.id.stats_projects);
-        mUserValueViews = new ArrayList<>();
-        mUserValueViews.add(mUserValueRating);
-        mUserValueViews.add(mUserValueCodeLines);
-        mUserValueViews.add(mUserValueProjects);
-
-        findViewById(R.id.phone_action).setOnClickListener(this);
-        findViewById(R.id.email_action).setOnClickListener(this);
-        findViewById(R.id.vk_action).setOnClickListener(this);
-        findViewById(R.id.github_action).setOnClickListener(this);
-
-        mFab.setOnClickListener(this);
-        mProfilePlaceholder.setOnClickListener(this);
+        mUserPhone.addTextChangedListener(
+                new RegExValidateWatcher(getString(R.string.pattern_phone),
+                        getString(R.string.profile_phone_error),
+                        (TextInputLayout) mUserPhone.getParent(),
+                        (ImageView) findViewById(R.id.phone_action)));
+        mUserEmail.addTextChangedListener(
+                new RegExValidateWatcher(getString(R.string.pattern_email),
+                        getString(R.string.profile_email_error),
+                        (TextInputLayout) mUserEmail.getParent(),
+                        (ImageView) findViewById(R.id.email_action)));
+        mUserVk.addTextChangedListener(
+                new RegExValidateWatcher(getString(R.string.pattern_vk),
+                        getString(R.string.profile_vk_error),
+                        (TextInputLayout) mUserVk.getParent(),
+                        (ImageView) findViewById(R.id.vk_action)));
+        mUserGithub.addTextChangedListener(
+                new RegExValidateWatcher(getString(R.string.pattern_github),
+                        getString(R.string.profile_github_error),
+                        (TextInputLayout) mUserGithub.getParent(),
+                        (ImageView) findViewById(R.id.github_action)));
 
         setupToolbar();
         setupDrawer();
+        loadNavHeaderUserInfo();
+        initUserFields();
+        initUserValue();
+        insertProfileImage(mDataManager.getPreferencesManager().loadUserPhoto());
+        insertAvatarImage(mDataManager.getPreferencesManager().loadUserAvatar());
+        if (savedInstanceState != null) {
+            changeEditMode(savedInstanceState.getInt(EDIT_MODE_KEY));
+        }
     }
 
     @Override
@@ -136,10 +162,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     @Override
     protected void onResume() {
         super.onResume();
-        initUserFields();
-        initUserValue();
-        insertProfileImage(mDataManager.getPreferencesManager().loadUserPhoto());
-        //insertAvatarImage(mDataManager.getPreferencesManager().loadUserAvatar());
         Log.d(TAG, "onResume");
     }
 
@@ -167,6 +189,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         super.onRestart();
         Log.d(TAG, "onRestart");
     }
+
+    @Override
+    protected void onSaveInstanceState(@Nullable Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (outState != null) {
+            outState.putInt(EDIT_MODE_KEY, mCurrentEditMode);
+        }
+    }
     //</editor-fold>
 
     @Override
@@ -186,13 +216,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     }
 
     @Override
+    @OnClick({R.id.fab, R.id.profile_placeholder, R.id.phone_action, R.id.email_action, R.id.vk_action, R.id.github_action})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.fab:
-                if (mCurrentEditMode == 0)
-                    changeEditMode(1);
+                if (mCurrentEditMode == MODE_READ_ONLY)
+                    changeEditMode(MODE_EDIT);
                 else
-                    changeEditMode(0);
+                    changeEditMode(MODE_READ_ONLY);
                 break;
             case R.id.profile_placeholder:
                 showDialog(ConstantManager.LOAD_PROFILE_PHOTO);
@@ -254,6 +285,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
                     mSelectedImage = data.getData();
                     insertProfileImage(mSelectedImage);
                     insertAvatarImage(mSelectedImage);
+                    uploadUserPhotos();
                 }
                 break;
             case ConstantManager.REQUEST_CAMERA_PICTURE:
@@ -261,6 +293,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
                     mSelectedImage = Uri.fromFile(mPhotoFile);
                     insertProfileImage(mSelectedImage);
                     insertAvatarImage(mSelectedImage);
+                    uploadUserPhotos();
                 }
                 break;
         }
@@ -271,6 +304,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         if (requestCode == ConstantManager.CAMERA_REQUEST_PERMISSION_CODE && grantResults.length == 2) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 loadPhotoFromCamera();
+            }
+        } else if (requestCode == ConstantManager.UPLOAD_REQUEST_PERMISSION_CODE && grantResults.length == 1) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                uploadUserPhotos();
             }
         }
     }
@@ -292,12 +329,24 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     }
 
     private void setupDrawer() {
+        mNavigationView.setCheckedItem(R.id.user_profile_menu);
         mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(MenuItem item) {
                 switch (item.getItemId()) {
-                    case R.id.team_menu:
-                        setContentView(R.layout.activity_auth);
+                    case R.id.all_menu:
+                        Intent userListIntent = new Intent(MainActivity.this, UserListActivity.class);
+                        startActivity(userListIntent);
+                        break;
+                    case R.id.logout_menu:
+                        mDataManager.getPreferencesManager().saveAuthToken("");
+                        mDataManager.getPreferencesManager().saveUserId("");
+                        Intent authIntent = new Intent(MainActivity.this, AuthActivity.class);
+                        authIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(authIntent);
+                        finish();
+                        break;
                 }
                 item.setChecked(true);
                 mNavigationDrawer.closeDrawer(GravityCompat.START);
@@ -307,27 +356,46 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     }
 
     private void changeEditMode(int mode) {
-        if (mode == 1) {
-            for (EditText userValue: mUserInfoViews) {
+        if (mode == MODE_EDIT) {
+            for (EditText userValue : mUserInfoViews) {
                 userValue.setFocusable(true);
+                userValue.setFocusableInTouchMode(true);
                 userValue.setEnabled(true);
-
-                showProfilePlaceholder();
-                lockToolbar();
-                mCollapsingToolbarLayout.setExpandedTitleColor(Color.TRANSPARENT);
             }
+            mUserPhone.requestFocus();
+            final InputMethodManager inputMethodManager =
+                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputMethodManager.showSoftInput(mUserPhone, InputMethodManager.SHOW_IMPLICIT);
+            showProfilePlaceholder();
+            lockToolbar();
+            mCollapsingToolbarLayout.setExpandedTitleColor(Color.TRANSPARENT);
             mCurrentEditMode = 1;
         } else {
-            for (EditText userValue: mUserInfoViews) {
+            for (EditText userValue : mUserInfoViews) {
                 userValue.setFocusable(false);
+                userValue.setFocusableInTouchMode(false);
                 userValue.setEnabled(false);
-
-                hideProfilePlaceholder();
-                unlockToolbar();
-                mCollapsingToolbarLayout.setExpandedTitleColor(getResources().getColor(R.color.white));
             }
+            try {
+                final InputMethodManager inputMethodManager =
+                        (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
+                        InputMethodManager.HIDE_NOT_ALWAYS);
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
+            hideProfilePlaceholder();
+            unlockToolbar();
+            mCollapsingToolbarLayout.setExpandedTitleColor(getResources().getColor(R.color.white));
             mCurrentEditMode = 0;
         }
+    }
+
+    private void loadNavHeaderUserInfo() {
+        ((TextView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_name))
+                .setText(mDataManager.getPreferencesManager().loadUserFullName());
+        ((TextView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_email))
+                .setText(mDataManager.getPreferencesManager().loadUserProfileData().get(1));
     }
 
     private void initUserFields() {
@@ -377,7 +445,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
                     android.Manifest.permission.CAMERA,
                     android.Manifest.permission.WRITE_EXTERNAL_STORAGE
             }, ConstantManager.CAMERA_REQUEST_PERMISSION_CODE);
-            Snackbar.make(mCoordinatorLayout, "Для корректной работы приложения неоюходимо дать требуемые разрешения", Snackbar.LENGTH_LONG)
+            Snackbar.make(mCoordinatorLayout, "Для корректной работы приложения необходимо дать требуемые разрешения", Snackbar.LENGTH_LONG)
                     .setAction("Разрешить", new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
@@ -395,7 +463,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         mProfilePlaceholder.setVisibility(View.VISIBLE);
     }
 
-    private void lockToolbar() {mAppBarLayout.setExpanded(true, true);
+    private void lockToolbar() {
+        mAppBarLayout.setExpanded(true, true);
         mAppBarParams.setScrollFlags(0);
         mCollapsingToolbarLayout.setLayoutParams(mAppBarParams);
     }
@@ -434,12 +503,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         mDataManager.getPreferencesManager().saveUserPhoto(image);
     }
 
-    private void insertAvatarImage (Uri image) {
-        ImageView headerPhoto = (ImageView) findViewById(R.id.nav_header_avatar);
-        Picasso.with(this).load(image).into(headerPhoto, new Callback() {
+    private void insertAvatarImage(Uri image) {
+        ImageView headerPhoto = (ImageView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_avatar);
+        Picasso.with(this).load(image).fit().into(headerPhoto, new Callback() {
             @Override
             public void onSuccess() {
-                ImageView headerPhoto = (ImageView) findViewById(R.id.nav_header_avatar);
+                ImageView headerPhoto = (ImageView) mNavigationView.getHeaderView(0).findViewById(R.id.nav_header_avatar);
                 Bitmap bitmap = ((BitmapDrawable) headerPhoto.getDrawable()).getBitmap();
                 RoundedBitmapDrawable roundedImage = RoundedBitmapDrawableFactory.create(getResources(), bitmap);
                 roundedImage.setGravity(Gravity.CENTER);
@@ -452,6 +521,76 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
                 showMessage("Error loading avatar");
             }
         });
+    }
+
+    private void uploadUserPhotos() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            String filePath;
+            if (mSelectedImage != null && "content".equals(mSelectedImage.getScheme())) {
+                Cursor cursor = this.getContentResolver().query(mSelectedImage, new String[]{android.provider.MediaStore.Images.ImageColumns.DATA}, null, null, null);
+                cursor.moveToFirst();
+                filePath = cursor.getString(0);
+                cursor.close();
+            } else {
+                filePath = mSelectedImage.getPath();
+            }
+            File file = new File(filePath);
+            final RequestBody requestFile =
+                    RequestBody.create(MediaType.parse("multipart/form-data"), file);
+            MultipartBody.Part body =
+                    MultipartBody.Part.createFormData("photo", file.getName(), requestFile);
+            Call<UploadPhotoRes> callPhoto = mDataManager.uploadPhoto(body);
+            callPhoto.enqueue(new retrofit2.Callback<UploadPhotoRes>() {
+                @Override
+                public void onResponse(Call<UploadPhotoRes> call,
+                                       Response<UploadPhotoRes> response) {
+                    if (response.code() == 200) {
+                        mDataManager.getPreferencesManager()
+                                .saveUserPhoto(Uri.parse(response.body().getData().getPhoto()));
+                        insertProfileImage(Uri.parse(response.body().getData().getPhoto()));
+                        Log.v(TAG, "Upload photo success");
+                    } else {
+                        Log.e(TAG, "Upload photo error: " + response.errorBody());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<UploadPhotoRes> call, Throwable t) {
+                    Log.e(TAG, "Upload photo error: " + t.getMessage());
+                }
+            });
+            Call<UploadPhotoRes> callAvatar = mDataManager.uploadAvatar(body);
+            callAvatar.enqueue(new retrofit2.Callback<UploadPhotoRes>() {
+                @Override
+                public void onResponse(Call<UploadPhotoRes> call,
+                                       Response<UploadPhotoRes> response) {
+                    if (response.code() == 200) {
+                        mDataManager.getPreferencesManager()
+                                .saveUserAvatar(Uri.parse(response.body().getData().getPhoto()));
+                        insertAvatarImage(Uri.parse(response.body().getData().getPhoto()));
+                        Log.v(TAG, "Upload avatar success");
+                    } else {
+                        Log.e(TAG, "Upload avatar error: " + response.errorBody());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<UploadPhotoRes> call, Throwable t) {
+                    Log.e(TAG, "Upload avatar error: " + t.getMessage());
+                }
+            });
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            }, ConstantManager.UPLOAD_REQUEST_PERMISSION_CODE);
+            Snackbar.make(mCoordinatorLayout, "Для корректной работы приложения необходимо дать требуемые разрешения", Snackbar.LENGTH_LONG)
+                    .setAction("Разрешить", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            openApplicationSettings();
+                        }
+                    }).show();
+        }
     }
     //</editor-fold>
 

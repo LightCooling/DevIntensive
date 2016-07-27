@@ -7,8 +7,14 @@
             android:icon="@drawable/ic_account_circle_black_24dp"
             android:title="Мой профиль"/>
         <item
-            android:id="@+id/team_menu"
+            android:id="@+id/all_menu"
             android:icon="@drawable/ic_group_black_24dp"
-            android:title="Команда"/>
+            android:title="Все пользователи"/>
+    </group>
+    <group android:checkableBehavior="none">
+        <item
+            android:id="@+id/logout_menu"
+            android:icon="@drawable/logout"
+            android:title="Выйти"/>
     </group>
 </menu>

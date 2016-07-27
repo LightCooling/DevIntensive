@@ -31,6 +31,16 @@ public class PreferencesManager {
         mSharedPreferences = DevIntensiveApplication.getSharedPreferences();
     }
 
+    public void saveUserFullName(String fullName) {
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.putString(ConstantManager.USER_FULL_NAME_KEY, fullName);
+        editor.apply();
+    }
+
+    public String loadUserFullName() {
+        return mSharedPreferences.getString(ConstantManager.USER_FULL_NAME_KEY, "Имя пользователя");
+    }
+
     public void saveUserProfileData(List<String> userFields) {
         SharedPreferences.Editor editor = mSharedPreferences.edit();
         for (int i = 0; i < USER_FIELDS.length; i++) {
@@ -103,5 +113,15 @@ public class PreferencesManager {
 
     public String getUserId() {
         return mSharedPreferences.getString(ConstantManager.USER_ID_KEY, "");
+    }
+
+    public void saveLastEmail(String email) {
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.putString(ConstantManager.USER_EMAIL, email);
+        editor.apply();
+    }
+
+    public String getLastEmail() {
+        return mSharedPreferences.getString(ConstantManager.USER_EMAIL, "");
     }
 }

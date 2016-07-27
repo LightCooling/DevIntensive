@@ -3,26 +3,27 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="@dimen/size_large_72">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
-        android:layout_marginRight="@dimen/spacing_large_56"
+        android:layout_marginRight="@dimen/spacing_larger_72"
         android:orientation="vertical">
 
         <TextView
-            style="@style/txt_hint"
+            style="@style/txt_title"
             android:text="@string/profile.github.hint"/>
 
-        <EditText
+        <TextView
             android:id="@+id/github_txt"
             style="@style/txt_value"
             android:text="@string/profile.github.value"/>
     </LinearLayout>
 
     <ImageView
+        android:id="@+id/github_action"
         style="@style/icon_right"
         android:src="@drawable/ic_visibility"/>
 </RelativeLayout>
